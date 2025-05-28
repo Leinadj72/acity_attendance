@@ -8,6 +8,10 @@
     #qrcode {
       margin-top: 20px;
     }
+    #downloadBtn {
+      margin-top: 10px;
+      display: none;
+    }
   </style>
 </head>
 <body class="container py-5">
@@ -22,7 +26,8 @@
 
     <div class="mb-3">
       <label class="form-label">Roll Number</label>
-      <input type="text" name="roll_number" class="form-control" required>
+      <input type="text" name="roll_number" class="form-control" required pattern="\d{11}" maxlength="11">
+      <small class="text-muted">Must be exactly 11 digits</small>
     </div>
 
     <div class="mb-3">
@@ -39,30 +44,55 @@
   </form>
 
   <div id="qrcode"></div>
+  <button id="downloadBtn" class="btn btn-success">Download QR Code</button>
 
-  <script src="assets/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script>
     const form = document.getElementById('qrForm');
     const qrcodeDiv = document.getElementById('qrcode');
+    const downloadBtn = document.getElementById('downloadBtn');
 
     form.addEventListener('submit', function(e) {
       e.preventDefault();
 
       const formData = new FormData(form);
+      const rollNumber = formData.get('roll_number');
+
+      if (!/^\d{11}$/.test(rollNumber)) {
+        alert("Roll Number must be exactly 11 digits.");
+        return;
+      }
+
       const data = {
         date: formData.get('date'),
-        roll_number: formData.get('roll_number'),
+        roll_number: rollNumber,
         location: formData.get('location'),
         item: formData.get('item')
       };
 
       const jsonData = JSON.stringify(data);
-      qrcodeDiv.innerHTML = ''; // Clear previous
-      new QRCode(qrcodeDiv, {
+      qrcodeDiv.innerHTML = '';
+      downloadBtn.style.display = 'none';
+
+      const qr = new QRCode(qrcodeDiv, {
         text: jsonData,
         width: 256,
         height: 256
       });
+
+      // Wait for QRCode to render before enabling download
+      setTimeout(() => {
+        const canvas = qrcodeDiv.querySelector('canvas');
+        if (canvas) {
+          downloadBtn.onclick = () => {
+            const link = document.createElement('a');
+            link.download = 'attendance_qr.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+          };
+          downloadBtn.style.display = 'inline-block';
+        }
+      }, 500);
     });
   </script>
 
