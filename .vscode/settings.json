@@ -1,3 +1,11 @@
 {
-  "cSpell.words": ["acity", "qrbox", "qrcode"]
+  "cSpell.words": [
+    "acity",
+    "autoloading",
+    "Endroid",
+    "phpdbg",
+    "qrbox",
+    "qrcode"
+  ],
+  "intelephense.diagnostics.undefinedTypes": false
 }
