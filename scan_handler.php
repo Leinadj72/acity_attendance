@@ -1,10 +1,16 @@
 <?php
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 include 'db.php';
 date_default_timezone_set("Africa/Accra");
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['token'])) {
   $token = $_POST['token'];
 
+  echo "<div class='alert alert-info'>✅ Handler triggered. Token received: " . htmlspecialchars($_POST['token']) . "</div>";
+
+
+  // Validate token existence
   $stmt = $conn->prepare("SELECT * FROM qr_tokens WHERE token = ?");
   $stmt->bind_param("s", $token);
   $stmt->execute();
@@ -37,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['token'])) {
   if ($usage_count === 0) {
     // Time In
     $timeIn = date("H:i:s");
-    $stmt = $conn->prepare("INSERT INTO attendance (token, date, roll_number, location, item, time_in) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt = $conn->prepare("INSERT INTO attendance (token_id, date, roll_number, location, item, time_in) VALUES (?, ?, ?, ?, ?, ?)");
     $stmt->bind_param("ssssss", $token, $date, $roll, $location, $item, $timeIn);
     $stmt->execute();
 
@@ -50,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['token'])) {
     // Time Out
     $timeOut = date("H:i:s");
 
-    $stmt = $conn->prepare("UPDATE attendance SET time_out = ? WHERE token = ? AND date = ? AND time_out IS NULL");
+    $stmt = $conn->prepare("UPDATE attendance SET time_out = ? WHERE token_id = ? AND date = ? AND time_out IS NULL");
     $stmt->bind_param("sss", $timeOut, $token, $date);
     $stmt->execute();
 
