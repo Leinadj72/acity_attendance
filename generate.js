@@ -10,14 +10,23 @@ form.addEventListener('submit', async function (e) {
   // Clear previous QR code & hide download button
   qrcodeDiv.innerHTML = '';
   downloadBtn.style.display = 'none';
-  downloadBtn.onclick = null;
 
-  // Get form data
   const formData = new FormData(form);
-  const date = formData.get('date');
-  const rollNumber = formData.get('roll_number');
-  const location = formData.get('location');
-  const item = formData.get('item');
+  const date = new Date().toISOString().slice(0, 10);
+  const rollNumber = formData.get('roll_number').trim();
+  const location = formData.get('location').trim();
+  const item = formData.get('item').trim();
+
+  if (!/^\d{11}$/.test(rollNumber)) {
+    alert('Roll Number must be exactly 11 digits.');
+    document.getElementById('rollNumberInput').focus();
+    return;
+  }
+
+  if (!location || !item) {
+    alert('Please fill in all fields.');
+    return;
+  }
 
   // Validate roll number (exactly 11 digits)
   /* if (!/^\d{11}$/.test(rollNumber)) {
@@ -30,19 +39,15 @@ form.addEventListener('submit', async function (e) {
   submitBtn.disabled = true;
   loadingSpinner.style.display = 'inline-block';
 
-  // Generate a unique token for QR code
-  const token = Math.random().toString(36).substr(2, 16);
-
-  // Encode ONLY the token string in the QR code
-  const tokenData = token;
+  const token = [...crypto.getRandomValues(new Uint8Array(8))]
+    .map((b) => b.toString(36))
+    .join('')
+    .slice(0, 16);
 
   try {
-    // Send full data (with token) to server to save in database
     const response = await fetch('save_token.php', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token, date, rollNumber, location, item }),
     });
 
@@ -52,9 +57,9 @@ form.addEventListener('submit', async function (e) {
       throw new Error(result.error || 'Failed to save token');
     }
 
-    // Generate QR code with only token data inside qrcodeDiv
+    // Generate QR code
     new QRCode(qrcodeDiv, {
-      text: tokenData,
+      text: token,
       width: 300,
       height: 300,
       colorDark: '#000000',
@@ -62,10 +67,7 @@ form.addEventListener('submit', async function (e) {
       correctLevel: QRCode.CorrectLevel.H,
     });
 
-    // Show download button
     downloadBtn.style.display = 'inline-block';
-
-    // Download QR code as PNG when clicked
     downloadBtn.onclick = () => {
       const canvas = qrcodeDiv.querySelector('canvas');
       if (canvas) {

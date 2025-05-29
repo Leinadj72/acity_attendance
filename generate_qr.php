@@ -1,3 +1,13 @@
+<?php
+include 'db.php';
+
+$items = [];
+$result = $conn->query("SELECT DISTINCT item_name FROM items_tags ORDER BY item_name ASC");
+while ($row = $result->fetch_assoc()) {
+  $items[] = $row['item_name'];
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,10 +32,10 @@
   <h2 class="mb-4">Generate Attendance QR Code</h2>
 
   <form id="qrForm" novalidate>
-    <div class="mb-3">
+    <!-- <div class="mb-3">
       <label for="dateInput" class="form-label">Date</label>
       <input id="dateInput" type="date" name="date" class="form-control" required />
-    </div>
+    </div> -->
 
     <div class="mb-3">
       <label for="rollNumberInput" class="form-label">Roll Number / Staff ID</label>
@@ -48,9 +58,15 @@
     </div>
 
     <div class="mb-3">
-      <label for="itemInput" class="form-label">Item</label>
-      <input id="itemInput" type="text" name="item" class="form-control" required />
+      <label for="itemSelect" class="form-label">Item</label>
+      <select name="item" id="itemSelect" class="form-control" required>
+        <option value="">-- Select Item --</option>
+        <?php foreach ($items as $item) { ?>
+          <option value="<?= htmlspecialchars($item) ?>"><?= htmlspecialchars($item) ?></option>
+        <?php } ?>
+      </select>
     </div>
+
 
     <button type="submit" class="btn btn-primary">Generate QR Code</button>
   </form>

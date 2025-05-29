@@ -28,6 +28,7 @@ function startScanner() {
       }
 
       setTimeout(() => {
+        alert('Scanner started'); // In JS before startScanner()
         startScanner(); // restart scanning
       }, 3000);
     },

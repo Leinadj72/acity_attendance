@@ -41,9 +41,19 @@ if (!isset($_SESSION['admin_logged_in'])) {
       <input type="text" id="search_roll_location" class="form-control" placeholder="Search roll or location" />
     </div>
     <div class="col-md-3 d-flex align-items-end">
-      <button id="filterBtn" class="btn btn-primary me-2">Filter</button>
-      <button id="resetBtn" class="btn btn-secondary">Reset</button>
+      <div class="form-check">
+        <input type="checkbox" class="form-check-input" id="pending_only" />
+        <label class="form-check-label" for="pending_only">Pending Time Out Only</label>
+      </div>
     </div>
+
+    <div class="col-md-3 d-flex align-items-end">
+      <div>
+        <button id="filterBtn" class="btn btn-primary me-2">Filter</button>
+        <button id="resetBtn" class="btn btn-secondary">Reset</button>
+      </div>
+    </div>
+
   </div>
 
   <table id="records" class="table table-bordered table-striped" style="width:100%">
@@ -117,76 +127,7 @@ if (!isset($_SESSION['admin_logged_in'])) {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
-  <script>
-    let table;
-
-    $(document).ready(function () {
-      table = $('#records').DataTable({
-        ajax: {
-          url: 'fetch_attendance.php',
-          data: function (d) {
-            d.start_date = $('#start_date').val();
-            d.end_date = $('#end_date').val();
-            d.search_query = $('#search_roll_location').val();
-          },
-          dataSrc: 'data',
-        },
-        columns: [
-          { data: 'index' },
-          { data: 'date' },
-          { data: 'roll_number' },
-          { data: 'location' },
-          { data: 'item' },
-          { data: 'time_in' },
-          { data: 'time_out' },
-          {
-            data: null,
-            render: function (data, type, row) {
-              return `<button class="btn btn-sm btn-warning edit-btn" data-id="${row.id}">Edit</button>`;
-            }
-          }
-        ],
-        dom: 'Bfrtip',
-        buttons: ['copy', 'csv', 'excel', 'pdf', 'print']
-      });
-
-      $('#filterBtn').on('click', () => table.ajax.reload());
-      $('#resetBtn').on('click', function () {
-        $('#start_date, #end_date, #search_roll_location').val('');
-        table.ajax.reload();
-      });
-
-      // Edit button event
-      $('#records').on('click', '.edit-btn', function () {
-        const data = table.row($(this).parents('tr')).data();
-        $('#edit_id').val(data.id);
-        $('#edit_date').val(data.date);
-        $('#edit_roll_number').val(data.roll_number);
-        $('#edit_location').val(data.location);
-        $('#edit_item').val(data.item);
-        $('#edit_time_in').val(data.time_in);
-        $('#edit_time_out').val(data.time_out);
-        $('#editModal').modal('show');
-      });
-
-      // Submit Edit Form
-      $('#editForm').on('submit', function (e) {
-        e.preventDefault();
-        $.ajax({
-          url: 'update_attendance.php',
-          type: 'POST',
-          data: $(this).serialize(),
-          success: function (response) {
-            $('#editModal').modal('hide');
-            table.ajax.reload();
-          },
-          error: function () {
-            alert('Failed to update record.');
-          }
-        });
-      });
-    });
-  </script>
+  <script src="view.js"></script>
 
 </body>
 </html>

@@ -74,11 +74,11 @@ $totalFiltered = $totalFilteredResult ? mysqli_fetch_assoc($totalFilteredResult)
 $orderColumnIndex = intval($_POST['order'][0]['column'] ?? 1);
 $orderDir = $_POST['order'][0]['dir'] === 'asc' ? 'ASC' : 'DESC';
 
-$columns = ['id', 'date', 'roll_number', 'location', 'item', 'time_in', 'time_out'];
+$columns = ['id', 'date', 'roll_number', 'location', 'item', 'time_in', 'time_out', 'time_out_approved'];
 $orderColumn = $columns[$orderColumnIndex] ?? 'date';
 
-// Fetch records with limits
-$query = "SELECT * FROM attendance $whereSql ORDER BY $orderColumn $orderDir LIMIT $start, $length";
+// Prioritize records where time_out IS NULL, then sort by the selected column
+$query = "SELECT * FROM attendance $whereSql ORDER BY time_out IS NULL DESC, $orderColumn $orderDir LIMIT $start, $length";
 $result = mysqli_query($conn, $query);
 
 $data = [];
