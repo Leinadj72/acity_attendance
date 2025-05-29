@@ -2,7 +2,6 @@
 include 'db.php';
 date_default_timezone_set("Africa/Accra");
 
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['token'])) {
     $token = $_POST['token'];
     $today = date("Y-m-d");
@@ -37,27 +36,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['token'])) {
     // 2. If first usage (Time In), ask for tag
     if ((int)$qr_row['usage_count'] === 0) {
         if (!isset($_POST['tag_number'])) {
+            // Show tag input form
             echo <<<FORM
-                <form method="post">
+                <div class="alert alert-success">✅ QR Code scanned successfully. Please enter your tag number.</div>
+                <form method="post" onsubmit="submitTag(event)">
                     <input type="hidden" name="token" value="{$token}">
                     <label>Enter Tag Number:</label>
-                    <input type="text" name="tag_number" required>
-                    <button type="submit">Submit</button>
+                    <input type="text" name="tag_number" id="tag_number" required>
+                    <button type="submit">Submit Tag</button>
                 </form>
+                <script>
+                    function submitTag(event) {
+                        event.preventDefault();
+                        const tag = document.getElementById('tag_number').value;
+                        const token = "{$token}";
+
+                        fetch('scan_handler.php', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                            body: 'token=' + encodeURIComponent(token) + '&tag_number=' + encodeURIComponent(tag)
+                        })
+                        .then(response => response.text())
+                        .then(data => {
+                            document.getElementById('result').innerHTML = data;
+                        });
+                    }
+                </script>
             FORM;
             exit;
         }
 
         $tag_number = trim($_POST['tag_number']);
 
-        // 3. Check if tag exists for this item and is available
+        // 3. Check if tag exists and is available for this item
         $stmt = $conn->prepare("SELECT * FROM item_tags WHERE tag_code = ? AND item_name = ? AND is_available = 1");
         $stmt->bind_param("ss", $tag_number, $item);
         $stmt->execute();
         $tag_check = $stmt->get_result();
 
         if ($tag_check->num_rows === 0) {
-            echo "<div class='alert alert-danger'>❌ Invalid or already used tag for this item.</div>";
+            echo "<div class='alert alert-danger'>❌ Invalid tag or not available for this item.</div>";
             exit;
         }
 
@@ -68,7 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['token'])) {
         $already_used = $stmt->get_result();
 
         if ($already_used->num_rows > 0) {
-            echo "<div class='alert alert-danger'>❌ Tag has already been used today.</div>";
+            echo "<div class='alert alert-danger'>❌ Tag code already used today.</div>";
             exit;
         }
 
@@ -78,20 +96,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['token'])) {
         $stmt->bind_param("sssssss", $token, $today, $roll, $location, $item, $tag_number, $timeIn);
         $stmt->execute();
 
-        // 6. Update QR code usage
+        // 6. Update QR token
         $stmt = $conn->prepare("UPDATE qr_tokens SET usage_count = usage_count + 1, time_in = ? WHERE token = ?");
         $stmt->bind_param("ss", $timeIn, $token);
         $stmt->execute();
 
-        // 7. Mark tag as unavailable
-        $stmt = $conn->prepare("UPDATE items_tags SET is_available = 0 WHERE tag_code = ?");
+        // 7. Mark tag unavailable
+        $stmt = $conn->prepare("UPDATE item_tags SET is_available = 0 WHERE tag_code = ?");
         $stmt->bind_param("s", $tag_number);
         $stmt->execute();
 
         echo "<div class='alert alert-success'>✅ Time In recorded for <strong>$roll</strong> at <strong>$timeIn</strong> with tag <strong>$tag_number</strong>.</div>";
+        echo "<script>setTimeout(() => startScanner(), 2000);</script>"; // restart scanner
+        exit;
+    }
 
-    } elseif ((int)$qr_row['usage_count'] === 1) {
-        // Time Out Request
+    // 8. Time Out flow
+    if ((int)$qr_row['usage_count'] === 1) {
         $stmt = $conn->prepare("UPDATE attendance SET time_out_requested = 1 WHERE token_id = ? AND date = ? AND time_out IS NULL");
         $stmt->bind_param("ss", $token, $today);
         $stmt->execute();
@@ -101,6 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['token'])) {
         $stmt->execute();
 
         echo "<div class='alert alert-warning'>⏳ Time Out requested. Awaiting admin approval.</div>";
+        echo "<script>setTimeout(() => startScanner(), 3000);</script>"; // restart scanner
         exit;
     }
 }
