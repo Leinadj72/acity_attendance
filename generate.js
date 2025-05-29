@@ -2,6 +2,7 @@ const form = document.getElementById('qrForm');
 const qrcodeDiv = document.getElementById('qrcode');
 const downloadBtn = document.getElementById('downloadBtn');
 const loadingSpinner = document.getElementById('loadingSpinner');
+const submitBtn = form.querySelector('button[type="submit"]');
 
 form.addEventListener('submit', async function (e) {
   e.preventDefault();
@@ -9,6 +10,7 @@ form.addEventListener('submit', async function (e) {
   // Clear previous QR code & hide download button
   qrcodeDiv.innerHTML = '';
   downloadBtn.style.display = 'none';
+  downloadBtn.onclick = null;
 
   // Get form data
   const formData = new FormData(form);
@@ -18,28 +20,30 @@ form.addEventListener('submit', async function (e) {
   const item = formData.get('item');
 
   // Validate roll number (exactly 11 digits)
-  if (!/^\d{11}$/.test(rollNumber)) {
+  /* if (!/^\d{11}$/.test(rollNumber)) {
     alert('Roll Number must be exactly 11 digits.');
+    document.getElementById('rollNumberInput').focus();
     return;
-  }
+  } */
+
+  // Disable submit button & show loading
+  submitBtn.disabled = true;
+  loadingSpinner.style.display = 'inline-block';
 
   // Generate a unique token for QR code
   const token = Math.random().toString(36).substr(2, 16);
 
-  // Data object to encode in QR code (including token)
-  const tokenData = JSON.stringify({ token, date, rollNumber, location, item });
-
-  // Show loading spinner
-  loadingSpinner.style.display = 'inline-block';
+  // Encode ONLY the token string in the QR code
+  const tokenData = token;
 
   try {
-    // Send token data to server to save in database
+    // Send full data (with token) to server to save in database
     const response = await fetch('save_token.php', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ token, date, rollNumber, location, item })
+      body: JSON.stringify({ token, date, rollNumber, location, item }),
     });
 
     const result = await response.json();
@@ -48,7 +52,7 @@ form.addEventListener('submit', async function (e) {
       throw new Error(result.error || 'Failed to save token');
     }
 
-    // Generate QR code inside the qrcodeDiv
+    // Generate QR code with only token data inside qrcodeDiv
     new QRCode(qrcodeDiv, {
       text: tokenData,
       width: 300,
@@ -78,5 +82,6 @@ form.addEventListener('submit', async function (e) {
     alert('Error: ' + error.message);
   } finally {
     loadingSpinner.style.display = 'none';
+    submitBtn.disabled = false;
   }
 });

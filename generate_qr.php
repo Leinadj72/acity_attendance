@@ -28,7 +28,7 @@
     </div>
 
     <div class="mb-3">
-      <label for="rollNumberInput" class="form-label">Roll Number</label>
+      <label for="rollNumberInput" class="form-label">Roll Number / Staff ID</label>
       <input
         id="rollNumberInput"
         type="text"
