@@ -45,6 +45,18 @@ function setupTagFormSubmission(form) {
         }, 5000);
       } else {
         showAlert('danger', `❌ ${result.message || result.status}`);
+        // Re-display the tag form so user can retry
+        DOM.result.innerHTML += `
+          <form id="tag-form" class="mb-3 mt-3">
+            <label for="tag" class="form-label">Tag Number:</label>
+            <input type="text" id="tag" name="tag" class="form-control mb-2" required autocomplete="off" autofocus>
+            <button type="submit" class="btn btn-primary w-100">Try Again</button>
+          </form>
+        `;
+        const tagForm = document.getElementById('tag-form');
+        if (tagForm) {
+          setupTagFormSubmission(tagForm);
+        }
       }
     } catch (err) {
       console.error('Tag form error:', err);

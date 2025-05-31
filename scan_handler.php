@@ -38,18 +38,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['token'])) {
     $roll = $qr_row['roll_number'];
     $location = $qr_row['location'];
 
-    // Handle Time In - just prompt for tag entry
-    if ((int)$qr_row['usage_count'] === 0) {
-        echo json_encode([
-            'status' => 'require_tag',
-            'message' => '✅ QR Code scanned successfully. Please enter your tag number.',
-            'token' => $token,
-            'item' => $item,
-            'roll' => $roll,
-            'location' => $location
-        ]);
+    // Check if Time In already recorded
+    $stmt = $conn->prepare("SELECT * FROM attendance WHERE token_id = ? AND date = ?");
+    $stmt->bind_param("ss", $token, $today);
+    $stmt->execute();
+    $attendance = $stmt->get_result();
+
+    if ($attendance->num_rows > 0) {
+        $att_row = $attendance->fetch_assoc();
+
+        if ($att_row['time_out_requested']) {
+            echo json_encode(['status' => 'timeout_requested']);
+            exit;
+        }
+
+        if ($att_row['time_out']) {
+            echo json_encode(['status' => 'timeout_approved']);
+            exit;
+        }
+
+        // Already timed in but no timeout yet
+        echo json_encode(['status' => 'already_timed_in']);
         exit;
     }
+
+    // First time scan: prompt for tag
+    echo json_encode([
+        'status' => 'require_tag',
+        'message' => '✅ QR Code scanned successfully. Please enter your tag number.',
+        'token' => $token,
+        'item' => $item,
+        'roll' => $roll,
+        'location' => $location
+    ]);
+    exit;
+
 
     // Handle Time Out - mark request and set to pending approval
     if ((int)$qr_row['usage_count'] === 1) {
