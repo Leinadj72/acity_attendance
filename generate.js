@@ -17,11 +17,11 @@ form.addEventListener('submit', async function (e) {
   const location = formData.get('location').trim();
   const item = formData.get('item').trim();
 
-  if (!/^\d{11}$/.test(rollNumber)) {
+  /* if (!/^\d{11}$/.test(rollNumber)) {
     alert('Roll Number must be exactly 11 digits.');
     document.getElementById('rollNumberInput').focus();
     return;
-  }
+  } */
 
   if (!location || !item) {
     alert('Please fill in all fields.');
