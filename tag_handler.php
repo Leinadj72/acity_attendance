@@ -90,7 +90,7 @@ try {
     }
 
     // Now insert into the attendance table
-    $timeIn = date("H:i:s");
+    $timeInFull = date("Y-m-d H:i:s"); // full datetime format
     $stmt = $conn->prepare("INSERT INTO attendance 
         (token_id, date, roll_number, location, item, tag_number, time_in, created_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, NOW())");
