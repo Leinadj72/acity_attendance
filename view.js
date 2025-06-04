@@ -1,57 +1,22 @@
-const html5QrCode = new Html5Qrcode('reader');
-const resultDiv = document.getElementById('result');
-let isProcessing = false;
-
-function postToken(token) {
-  fetch('view_attendance.php', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: 'token=' + encodeURIComponent(token),
-  })
-    .then((res) => res.text())
-    .then((html) => {
-      resultDiv.innerHTML = html;
-      setTimeout(() => {
-        resultDiv.innerHTML = '';
-        isProcessing = false;
-        html5QrCode.start(
-          { facingMode: 'environment' },
-          { fps: 10, qrbox: 250 },
-          onScanSuccess
-        );
-      }, 5000);
-    })
-    .catch(() => {
-      resultDiv.innerHTML =
-        '<div class="alert alert-danger">Error sending token to server</div>';
-      isProcessing = false;
-      html5QrCode.start(
-        { facingMode: 'environment' },
-        { fps: 10, qrbox: 250 },
-        onScanSuccess
-      );
-    });
-}
-
-function onScanSuccess(decodedText) {
-  if (isProcessing || !decodedText.trim()) return;
-  isProcessing = true;
-  html5QrCode
-    .stop()
-    .then(() => postToken(decodedText))
-    .catch((err) => {
-      resultDiv.innerHTML = `<div class="alert alert-danger">Failed to stop scanner: ${err}</div>`;
-      isProcessing = false;
-    });
-}
-
-html5QrCode
-  .start({ facingMode: 'environment' }, { fps: 10, qrbox: 250 }, onScanSuccess)
-  .catch((err) => {
-    resultDiv.innerHTML = `<div class="alert alert-danger">Unable to start scanner: ${err}</div>`;
-  });
-
 $(document).ready(function () {
+  // Show Bootstrap Toast
+  function showToast(message, type = 'success') {
+    const toast = $(`
+      <div class="toast align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+          <div class="toast-body">${message}</div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+      </div>
+    `);
+    $('#toastContainer').append(toast);
+    const bsToast = new bootstrap.Toast(toast[0], { delay: 3000 });
+    bsToast.show();
+    toast.on('hidden.bs.toast', function () {
+      toast.remove();
+    });
+  }
+
   const table = $('#records').DataTable({
     ajax: {
       url: 'fetch_attendance.php',
@@ -74,30 +39,41 @@ $(document).ready(function () {
       {
         data: null,
         render: function (data, type, row) {
+          let buttons = '';
+          // Edit button always visible
+          buttons += `<button class="btn btn-primary btn-sm edit-btn" data-id="${row.id}">Edit</button> `;
+
           if (row.time_out_requested == 1 && row.time_out_approved == 0) {
-            return `
+            buttons += `
               <button class="btn btn-success btn-sm approve-btn" data-id="${row.id}">Approve</button>
               <button class="btn btn-danger btn-sm reject-btn" data-id="${row.id}">Reject</button>
             `;
           } else {
-            return `<span class="text-muted">No Action</span>`;
+            buttons += `<span class="text-muted">No Action</span>`;
           }
+          return buttons;
         },
       },
     ],
   });
 
+  // Loading indicator on ajax reload
+  table.on('preXhr.dt', () => $('#records').addClass('opacity-50'));
+  table.on('xhr.dt', () => $('#records').removeClass('opacity-50'));
+
+  // Filter button
   $('#filterBtn').click(function () {
     table.ajax.reload();
   });
 
+  // Reset filter button
   $('#resetBtn').click(function () {
     $('#start_date, #end_date, #search_roll_location').val('');
     $('#pending_only').prop('checked', false);
     table.ajax.reload();
   });
 
-  // Approve button click
+  // Approve Time Out
   $('#records').on('click', '.approve-btn', function () {
     const button = $(this);
     const id = button.data('id');
@@ -107,18 +83,18 @@ $(document).ready(function () {
       'approve_attendance.php',
       { id },
       function (response) {
-        alert(response.message || 'Approved!');
+        showToast(response.message || 'Approved!', 'success');
         table.ajax.reload();
       },
       'json'
     )
-      .fail(() => alert('Failed to approve. Try again.'))
+      .fail(() => showToast('Failed to approve. Try again.', 'danger'))
       .always(() => {
         button.prop('disabled', false).text('Approve');
       });
   });
 
-  // Reject button click
+  // Reject Time Out
   $('#records').on('click', '.reject-btn', function () {
     const button = $(this);
     const id = button.data('id');
@@ -128,14 +104,40 @@ $(document).ready(function () {
       'reject_attendance.php',
       { id },
       function (response) {
-        alert(response.message || 'Rejected!');
+        showToast(response.message || 'Rejected!', 'success');
         table.ajax.reload();
       },
       'json'
     )
-      .fail(() => alert('Failed to reject. Try again.'))
+      .fail(() => showToast('Failed to reject. Try again.', 'danger'))
       .always(() => {
         button.prop('disabled', false).text('Reject');
       });
+  });
+
+  // Open Edit Modal & fill form
+  $('#records').on('click', '.edit-btn', function () {
+    const rowData = table.row($(this).closest('tr')).data();
+    $('#edit_id').val(rowData.id);
+    $('#edit_date').val(rowData.date);
+    $('#edit_roll_number').val(rowData.roll_number);
+    $('#edit_location').val(rowData.location);
+    $('#edit_item').val(rowData.item);
+    $('#edit_time_in').val(rowData.time_in);
+    $('#edit_time_out').val(rowData.time_out);
+    $('#editModal').modal('show');
+  });
+
+  // Submit Edit Form
+  $('#editForm').submit(function (e) {
+    e.preventDefault();
+    const formData = $(this).serialize();
+
+    $.post('edit_attendance.php', formData, function (response) {
+      showToast(response.message || 'Updated successfully!', 'success');
+      $('#editModal').modal('hide');
+      table.ajax.reload();
+    }, 'json')
+      .fail(() => showToast('Failed to update.', 'danger'));
   });
 });

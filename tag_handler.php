@@ -75,22 +75,15 @@ try {
     }
     $stmt->close();
 
-    // 4. Record Time In
-    // First get the numeric token ID from the token string
-    $stmt = $conn->prepare("SELECT id FROM qr_tokens WHERE token = ?");
-    $stmt->bind_param("s", $token);
-    $stmt->execute();
-    $stmt->bind_result($tokenId);
-    $stmt->fetch();
-    $stmt->close();
-
+    // Already have $tokenId from earlier
     if (!$tokenId) {
-        echo json_encode(["status" => "error", "message" => "Invalid token."]);
+        echo json_encode(["status" => "error", "message" => "Token ID missing."]);
         exit;
     }
 
+
     // Now insert into the attendance table
-    $timeInFull = date("Y-m-d H:i:s"); // full datetime format
+    $timeIn = date("H:i:s"); // full datetime format
     $stmt = $conn->prepare("INSERT INTO attendance 
         (token_id, date, roll_number, location, item, tag_number, time_in, created_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, NOW())");
@@ -99,10 +92,11 @@ try {
     $stmt->close();
 
     // 5. Update token usage
+    $timeInFull = date("Y-m-d H:i:s"); // full datetime format
     $stmt = $conn->prepare("UPDATE qr_tokens 
         SET usage_count = usage_count + 1, time_in = ?, updated_at = NOW()
         WHERE token = ?");
-    $stmt->bind_param("ss", $timeIn, $token);
+    $stmt->bind_param("ss", $timeInFull, $token);
     $stmt->execute();
     $stmt->close();
 

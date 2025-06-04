@@ -37,32 +37,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['token'])) {
     $item = $qr_row['item'];
     $roll = $qr_row['roll_number'];
     $location = $qr_row['location'];
+    $tokenId = $qr_row['id'];
 
-    // Check if Time In already recorded
+    // Check if attendance already exists for today
     $stmt = $conn->prepare("SELECT * FROM attendance WHERE token_id = ? AND date = ?");
-    $stmt->bind_param("ss", $token, $today);
+    $stmt->bind_param("is", $tokenId, $today);
     $stmt->execute();
     $attendance = $stmt->get_result();
 
     if ($attendance->num_rows > 0) {
         $att_row = $attendance->fetch_assoc();
 
-        if ($att_row['time_out_requested']) {
-            echo json_encode(['status' => 'timeout_requested']);
-            exit;
-        }
-
         if ($att_row['time_out']) {
             echo json_encode(['status' => 'timeout_approved']);
             exit;
         }
 
-        // Already timed in but no timeout yet
+        if ($att_row['time_out_requested']) {
+            echo json_encode(['status' => 'timeout_requested']);
+            exit;
+        }
+
+        // Handle Time Out request
+        if ((int)$qr_row['usage_count'] === 1) {
+            // Mark Time Out as requested
+            $stmt = $conn->prepare("UPDATE attendance SET time_out_requested = 1 WHERE token_id = ? AND date = ? AND time_out IS NULL");
+            $stmt->bind_param("is", $tokenId, $today);
+            $stmt->execute();
+
+            // Update QR token usage count and status
+            $stmt = $conn->prepare("UPDATE qr_tokens SET usage_count = usage_count + 1, status = 'pending_approval' WHERE token = ?");
+            $stmt->bind_param("s", $token);
+            $stmt->execute();
+
+            echo json_encode(['status' => 'timeout_requested']);
+            exit;
+        }
+
         echo json_encode(['status' => 'already_timed_in']);
         exit;
     }
 
-    // First time scan: prompt for tag
+    // First scan (Time In not yet recorded)
     echo json_encode([
         'status' => 'require_tag',
         'message' => '✅ QR Code scanned successfully. Please enter your tag number.',
@@ -72,26 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['token'])) {
         'location' => $location
     ]);
     exit;
-
-
-    // Handle Time Out - mark request and set to pending approval
-    if ((int)$qr_row['usage_count'] === 1) {
-        $stmt = $conn->prepare("UPDATE attendance SET time_out_requested = 1 WHERE token_id = ? AND date = ? AND time_out IS NULL");
-        $stmt->bind_param("ss", $token, $today);
-        $stmt->execute();
-
-        $stmt = $conn->prepare("UPDATE qr_tokens SET usage_count = usage_count + 1, status = 'pending_approval' WHERE token = ?");
-        $stmt->bind_param("s", $token);
-        $stmt->execute();
-
-        echo json_encode(['status' => 'timeout_requested']);
-        exit;
-    }
-
-    echo json_encode(['status' => 'used']);
-    exit;
 }
 
 echo json_encode(['status' => 'invalid_request']);
 exit;
-?>

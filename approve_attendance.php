@@ -2,7 +2,7 @@
 session_start();
 include 'db.php';
 
-header('Content-Type: application/json');
+header('Content-Type: application/json; charset=utf-8');
 
 if (!isset($_SESSION['admin_logged_in'])) {
   http_response_code(403);
@@ -12,12 +12,11 @@ if (!isset($_SESSION['admin_logged_in'])) {
 
 $id = intval($_POST['id'] ?? 0);
 
-if (!$id) {
+if ($id <= 0) {
   echo json_encode(['success' => false, 'message' => 'Invalid record ID']);
   exit;
 }
 
-// Set time_out_approved = 1
 $stmt = $conn->prepare("
   UPDATE attendance 
   SET time_out_approved = 1, 
@@ -29,8 +28,9 @@ $stmt->bind_param("i", $id);
 if ($stmt->execute()) {
   echo json_encode(['success' => true, 'message' => 'Time Out approved successfully']);
 } else {
-  echo json_encode(['success' => false, 'message' => $stmt->error]);
+  echo json_encode(['success' => false, 'message' => 'Database error: ' . $stmt->error]);
 }
 
 $stmt->close();
 $conn->close();
+?>
