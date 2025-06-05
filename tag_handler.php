@@ -91,7 +91,7 @@ try {
     $stmt->execute();
     $stmt->close();
 
-    $stmt = $conn->prepare("UPDATE items_tags SET is_available = is_available - 1 WHERE tag_code = ?");
+    $stmt = $conn->prepare("UPDATE items_tags SET is_available = 0 WHERE tag_code = ?");
     $stmt->bind_param("s", $tagCode);
     $stmt->execute();
     $stmt->close();

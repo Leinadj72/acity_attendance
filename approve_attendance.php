@@ -44,16 +44,15 @@ $stmt->close();
 
 $stmt = $conn->prepare("
   UPDATE qr_tokens 
-  SET usage_count = usage_count + 1, 
-      last_used_at = NOW(), 
-      status = 'inactive' 
+  SET last_used_at = NOW(),
+      time_out = IFNULL(time_out, NOW())
   WHERE id = ?
 ");
 $stmt->bind_param("i", $token_id);
 $stmt->execute();
 $stmt->close();
 
-$stmt = $conn->prepare("UPDATE items_tags SET is_available = is_available + 1 WHERE item_name = ?");
+$stmt = $conn->prepare("UPDATE items_tags SET is_available = 1 WHERE item_name = ?");
 $stmt->bind_param("s", $item);
 $stmt->execute();
 $stmt->close();
