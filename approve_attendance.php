@@ -46,7 +46,7 @@ $stmt = $conn->prepare("
   UPDATE qr_tokens 
   SET usage_count = usage_count + 1, 
       last_used_at = NOW(), 
-      status = 'used' 
+      status = 'inactive' 
   WHERE id = ?
 ");
 $stmt->bind_param("i", $token_id);
