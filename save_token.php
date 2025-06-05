@@ -2,10 +2,8 @@
 include 'db.php';
 header('Content-Type: application/json');
 
-// Decode JSON input
 $input = json_decode(file_get_contents('php://input'), true);
 
-// Validate required fields
 if (
     !isset($input['token'], $input['date'], $input['rollNumber'], $input['location'], $input['item'])
 ) {
@@ -19,7 +17,6 @@ $rollNumber = trim($input['rollNumber']);
 $location = trim($input['location']);
 $item = trim($input['item']);
 
-// 1. Ensure token is unique
 $checkTokenQuery = "SELECT id FROM qr_tokens WHERE token = ?";
 $checkTokenStmt = $conn->prepare($checkTokenQuery);
 $checkTokenStmt->bind_param("s", $token);
@@ -33,7 +30,6 @@ if ($tokenResult->num_rows > 0) {
 }
 $checkTokenStmt->close();
 
-// 2. Check if the same roll number already has an active request for the same item & location
 $checkActiveQuery = "SELECT id FROM qr_tokens 
                      WHERE roll_number = ? AND location = ? AND item = ? AND status = 'active'";
 $checkActiveStmt = $conn->prepare($checkActiveQuery);
@@ -48,7 +44,6 @@ if ($activeResult->num_rows > 0) {
 }
 $checkActiveStmt->close();
 
-// 3. Save token into `qr_tokens` table with default usage count = 0 and max usage = 2
 $saveQuery = "INSERT INTO qr_tokens 
               (token, date, roll_number, location, item, usage_count, max_usage, status, created_at) 
               VALUES (?, ?, ?, ?, ?, 0, 2, 'active', NOW())";

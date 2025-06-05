@@ -23,7 +23,6 @@ if ($result->num_rows === 0) {
 
 $row = $result->fetch_assoc();
 
-// Compare tag
 if ($tag !== $row['tag_number']) {
     echo json_encode(['success' => false, 'message' => 'Tag does not match the item']);
     exit;
@@ -32,7 +31,6 @@ if ($tag !== $row['tag_number']) {
 $id = $row['id'];
 
 if (empty($row['time_in'])) {
-    // Time In
     $now = date('Y-m-d H:i:s');
     $stmt = $conn->prepare("UPDATE attendance SET time_in = ? WHERE id = ?");
     $stmt->bind_param("si", $now, $id);
@@ -40,7 +38,6 @@ if (empty($row['time_in'])) {
 
     echo json_encode(['success' => true, 'message' => 'Time In recorded']);
 } elseif (empty($row['time_out'])) {
-    // Time Out request: just flag as pending
     $stmt = $conn->prepare("UPDATE attendance SET time_out_requested = 1 WHERE id = ?");
     $stmt->bind_param("i", $id);
     $stmt->execute();

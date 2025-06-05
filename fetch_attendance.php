@@ -11,7 +11,6 @@ $where = [];
 $params = [];
 
 try {
-  // Filter by date range
   if (!empty($start_date)) {
     $where[] = "date >= ?";
     $params[] = $start_date;
@@ -22,19 +21,16 @@ try {
     $params[] = $end_date;
   }
 
-  // Filter by search keyword (roll number or location)
   if (!empty($search)) {
     $where[] = "(roll_number LIKE ? OR location LIKE ?)";
     $params[] = "%$search%";
     $params[] = "%$search%";
   }
 
-  // Filter for pending approval only
   if ($pending_only === '1') {
     $where[] = "(time_out_requested = 1 AND time_out_approved = 0)";
   }
 
-  // Build the SQL query
   $sql = "SELECT * FROM attendance";
   if ($where) {
     $sql .= " WHERE " . implode(" AND ", $where);
@@ -43,7 +39,6 @@ try {
 
   $stmt = $conn->prepare($sql);
 
-  // Bind parameters if needed
   if ($params) {
     $types = str_repeat("s", count($params));
     $stmt->bind_param($types, ...$params);

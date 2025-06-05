@@ -7,11 +7,9 @@ include 'db.php';
 
 date_default_timezone_set('Africa/Accra');
 
-// Debug logs (optional, for development)
 file_put_contents('debug_raw_input.log', file_get_contents('php://input'), FILE_APPEND);
 file_put_contents('debug_post.log', print_r($_POST, true), FILE_APPEND);
 
-// Sanitize inputs
 $tagCode = trim($_POST['tag'] ?? '');
 $token = trim($_POST['token'] ?? '');
 
@@ -25,7 +23,6 @@ if (empty($tagCode) || empty($token)) {
 try {
     $today = date('Y-m-d');
 
-    // 1. Fetch and validate token
     $stmt = $conn->prepare("SELECT * FROM qr_tokens WHERE token = ? AND status = 'active'");
     $stmt->bind_param("s", $token);
     $stmt->execute();
@@ -40,13 +37,11 @@ try {
         ]));
     }
 
-    // Extract token details
     $roll = $tokenData['roll_number'];
     $item = $tokenData['item'];
     $location = $tokenData['location'];
     $tokenId = $tokenData['id'];
 
-    // 2. Check tag availability
     $stmt = $conn->prepare("SELECT * FROM items_tags WHERE tag_code = ? AND item_name = ? AND is_available = 1");
     $stmt->bind_param("ss", $tagCode, $item);
     $stmt->execute();
@@ -60,7 +55,6 @@ try {
         ]));
     }
 
-    // 3. Ensure tag hasn't already been used today
     $stmt = $conn->prepare("SELECT id FROM attendance WHERE tag_number = ? AND date = ?");
     $stmt->bind_param("ss", $tagCode, $today);
     $stmt->execute();
@@ -75,15 +69,13 @@ try {
     }
     $stmt->close();
 
-    // Already have $tokenId from earlier
     if (!$tokenId) {
         echo json_encode(["status" => "error", "message" => "Token ID missing."]);
         exit;
     }
 
 
-    // Now insert into the attendance table
-    $timeIn = date("H:i:s"); // full datetime format
+    $timeIn = date("H:i:s");
     $stmt = $conn->prepare("INSERT INTO attendance 
         (token_id, date, roll_number, location, item, tag_number, time_in, created_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, NOW())");
@@ -91,22 +83,19 @@ try {
     $stmt->execute();
     $stmt->close();
 
-    // 5. Update token usage
-    $timeInFull = date("Y-m-d H:i:s"); // full datetime format
+    $timeInFull = date("Y-m-d H:i:s");
     $stmt = $conn->prepare("UPDATE qr_tokens 
-        SET usage_count = usage_count + 1, time_in = ?, updated_at = NOW()
+        SET usage_count = usage_count + 1, time_in = ?,last_used_at= NOW(), updated_at = NOW()
         WHERE token = ?");
     $stmt->bind_param("ss", $timeInFull, $token);
     $stmt->execute();
     $stmt->close();
 
-    // 6. Mark tag as used
-    $stmt = $conn->prepare("UPDATE items_tags SET is_available = 0 WHERE tag_code = ?");
+    $stmt = $conn->prepare("UPDATE items_tags SET is_available = is_available - 1 WHERE tag_code = ?");
     $stmt->bind_param("s", $tagCode);
     $stmt->execute();
     $stmt->close();
 
-    // 7. Success response
     echo json_encode([
         'status' => 'success',
         'message' => "✅ Time In recorded at $timeIn.",

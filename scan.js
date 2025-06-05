@@ -45,7 +45,6 @@ function setupTagFormSubmission(form) {
         }, 5000);
       } else {
         showAlert('danger', `❌ ${result.message || result.status}`);
-        // Re-display the tag form so user can retry
         DOM.result.innerHTML += `
           <form id="tag-form" class="mb-3 mt-3">
             <label for="tag" class="form-label">Tag Number:</label>
@@ -165,6 +164,5 @@ function startScanner() {
     });
 }
 
-// Initial run
 updateStatus('📷 Looking for QR code...');
 startScanner();

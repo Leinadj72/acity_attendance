@@ -13,7 +13,6 @@ function escape($conn, $str) {
   return mysqli_real_escape_string($conn, $str);
 }
 
-// Get POST parameters from DataTables
 $draw = $_POST['draw'] ?? 1;
 $start = intval($_POST['start'] ?? 0);
 $length = intval($_POST['length'] ?? 10);
@@ -23,7 +22,6 @@ $start_date = $_POST['start_date'] ?? '';
 $end_date = $_POST['end_date'] ?? '';
 $search_roll_location = $_POST['search_roll_location'] ?? '';
 
-// Handle individual record fetch for editing
 if (isset($_POST['action']) && $_POST['action'] === 'get' && isset($_POST['id'])) {
   $id = intval($_POST['id']);
   $res = mysqli_query($conn, "SELECT * FROM attendance WHERE id = $id LIMIT 1");
@@ -36,11 +34,9 @@ if (isset($_POST['action']) && $_POST['action'] === 'get' && isset($_POST['id'])
   exit;
 }
 
-// Total records without filtering
 $totalRecordsResult = mysqli_query($conn, "SELECT COUNT(*) as count FROM attendance");
 $totalRecords = $totalRecordsResult ? mysqli_fetch_assoc($totalRecordsResult)['count'] : 0;
 
-// Build WHERE clause
 $where = [];
 
 if (!empty($start_date)) {
@@ -62,18 +58,15 @@ if (!empty($searchValue)) {
 
 $whereSql = count($where) ? ' WHERE ' . implode(' AND ', $where) : '';
 
-// Total filtered records
 $totalFilteredResult = mysqli_query($conn, "SELECT COUNT(*) as count FROM attendance $whereSql");
 $totalFiltered = $totalFilteredResult ? mysqli_fetch_assoc($totalFilteredResult)['count'] : 0;
 
-// Ordering
 $orderColumnIndex = intval($_POST['order'][0]['column'] ?? 1);
 $orderDir = ($_POST['order'][0]['dir'] ?? 'desc') === 'asc' ? 'ASC' : 'DESC';
 
 $columns = ['id', 'date', 'roll_number', 'location', 'item', 'time_in', 'time_out', 'time_out_approved'];
 $orderColumn = $columns[$orderColumnIndex] ?? 'date';
 
-// Fetch filtered data
 $query = "SELECT * FROM attendance $whereSql ORDER BY time_out IS NULL DESC, $orderColumn $orderDir LIMIT $start, $length";
 $result = mysqli_query($conn, $query);
 
@@ -94,7 +87,6 @@ if ($result) {
   exit;
 }
 
-// Prepare and send response
 $response = [
   'draw' => intval($draw),
   'recordsTotal' => $totalRecords,

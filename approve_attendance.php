@@ -2,7 +2,7 @@
 session_start();
 include 'db.php';
 
-header('Content-Type: application/json; charset=utf-8');
+header('Content-Type: application/json');
 
 if (!isset($_SESSION['admin_logged_in'])) {
   http_response_code(403);
@@ -12,10 +12,25 @@ if (!isset($_SESSION['admin_logged_in'])) {
 
 $id = intval($_POST['id'] ?? 0);
 
-if ($id <= 0) {
+if (!$id) {
   echo json_encode(['success' => false, 'message' => 'Invalid record ID']);
   exit;
 }
+
+$stmt = $conn->prepare("SELECT token_id, item FROM attendance WHERE id = ?");
+$stmt->bind_param("i", $id);
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($result->num_rows !== 1) {
+  echo json_encode(['success' => false, 'message' => 'Attendance not found']);
+  exit;
+}
+
+$row = $result->fetch_assoc();
+$token_id = $row['token_id'];
+$item = $row['item'];
+$stmt->close();
 
 $stmt = $conn->prepare("
   UPDATE attendance 
@@ -24,13 +39,24 @@ $stmt = $conn->prepare("
   WHERE id = ?
 ");
 $stmt->bind_param("i", $id);
-
-if ($stmt->execute()) {
-  echo json_encode(['success' => true, 'message' => 'Time Out approved successfully']);
-} else {
-  echo json_encode(['success' => false, 'message' => 'Database error: ' . $stmt->error]);
-}
-
+$stmt->execute();
 $stmt->close();
+
+$stmt = $conn->prepare("
+  UPDATE qr_tokens 
+  SET usage_count = usage_count + 1, 
+      last_used_at = NOW(), 
+      status = 'used' 
+  WHERE id = ?
+");
+$stmt->bind_param("i", $token_id);
+$stmt->execute();
+$stmt->close();
+
+$stmt = $conn->prepare("UPDATE items_tags SET is_available = is_available + 1 WHERE item_name = ?");
+$stmt->bind_param("s", $item);
+$stmt->execute();
+$stmt->close();
+
+echo json_encode(['success' => true, 'message' => 'Time Out approved and item returned']);
 $conn->close();
-?>

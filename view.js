@@ -1,5 +1,4 @@
 $(document).ready(function () {
-  // Show Bootstrap Toast
   function showToast(message, type = 'success') {
     const toast = $(`
       <div class="toast align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
@@ -40,7 +39,6 @@ $(document).ready(function () {
         data: null,
         render: function (data, type, row) {
           let buttons = '';
-          // Edit button always visible
           buttons += `<button class="btn btn-primary btn-sm edit-btn" data-id="${row.id}">Edit</button> `;
 
           if (row.time_out_requested == 1 && row.time_out_approved == 0) {
@@ -57,23 +55,19 @@ $(document).ready(function () {
     ],
   });
 
-  // Loading indicator on ajax reload
   table.on('preXhr.dt', () => $('#records').addClass('opacity-50'));
   table.on('xhr.dt', () => $('#records').removeClass('opacity-50'));
 
-  // Filter button
   $('#filterBtn').click(function () {
     table.ajax.reload();
   });
 
-  // Reset filter button
   $('#resetBtn').click(function () {
     $('#start_date, #end_date, #search_roll_location').val('');
     $('#pending_only').prop('checked', false);
     table.ajax.reload();
   });
 
-  // Approve Time Out
   $('#records').on('click', '.approve-btn', function () {
     const button = $(this);
     const id = button.data('id');
@@ -94,7 +88,6 @@ $(document).ready(function () {
       });
   });
 
-  // Reject Time Out
   $('#records').on('click', '.reject-btn', function () {
     const button = $(this);
     const id = button.data('id');
@@ -115,7 +108,6 @@ $(document).ready(function () {
       });
   });
 
-  // Open Edit Modal & fill form
   $('#records').on('click', '.edit-btn', function () {
     const rowData = table.row($(this).closest('tr')).data();
     $('#edit_id').val(rowData.id);
@@ -128,7 +120,6 @@ $(document).ready(function () {
     $('#editModal').modal('show');
   });
 
-  // Submit Edit Form
   $('#editForm').submit(function (e) {
     e.preventDefault();
     const formData = $(this).serialize();

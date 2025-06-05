@@ -10,7 +10,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['token'])) {
     $token = trim($_POST['token']);
     $today = date("Y-m-d");
 
-    // Fetch token record
     $stmt = $conn->prepare("SELECT * FROM qr_tokens WHERE token = ?");
     $stmt->bind_param("s", $token);
     $stmt->execute();
@@ -23,7 +22,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['token'])) {
 
     $qr_row = $qr->fetch_assoc();
 
-    // Inactive or expired QR
     if ($qr_row['status'] !== 'active') {
         echo json_encode(['status' => 'used']);
         exit;
@@ -39,7 +37,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['token'])) {
     $location = $qr_row['location'];
     $tokenId = $qr_row['id'];
 
-    // Check if attendance already exists for today
     $stmt = $conn->prepare("SELECT * FROM attendance WHERE token_id = ? AND date = ?");
     $stmt->bind_param("is", $tokenId, $today);
     $stmt->execute();
@@ -58,15 +55,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['token'])) {
             exit;
         }
 
-        // Handle Time Out request
         if ((int)$qr_row['usage_count'] === 1) {
-            // Mark Time Out as requested
             $stmt = $conn->prepare("UPDATE attendance SET time_out_requested = 1 WHERE token_id = ? AND date = ? AND time_out IS NULL");
             $stmt->bind_param("is", $tokenId, $today);
             $stmt->execute();
 
-            // Update QR token usage count and status
-            $stmt = $conn->prepare("UPDATE qr_tokens SET usage_count = usage_count + 1, status = 'pending_approval' WHERE token = ?");
+            $stmt = $conn->prepare("UPDATE qr_tokens SET usage_count = usage_count + 1, status = 'inactive' WHERE token = ?");
             $stmt->bind_param("s", $token);
             $stmt->execute();
 
@@ -78,7 +72,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['token'])) {
         exit;
     }
 
-    // First scan (Time In not yet recorded)
     echo json_encode([
         'status' => 'require_tag',
         'message' => '✅ QR Code scanned successfully. Please enter your tag number.',

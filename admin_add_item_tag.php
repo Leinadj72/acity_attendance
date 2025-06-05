@@ -6,7 +6,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $tag_code = $_POST['tag_code'] ?? '';
 
   if ($item_name && $tag_code) {
-    // Check if tag_code already exists
     $checkStmt = $conn->prepare("SELECT id FROM items_tags WHERE tag_code = ?");
     $checkStmt->bind_param('s', $tag_code);
     $checkStmt->execute();
@@ -15,7 +14,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($checkStmt->num_rows > 0) {
       $msg = "Error: Tag number already exists.";
     } else {
-      // Proceed to insert
       $stmt = $conn->prepare("INSERT INTO items_tags (item_name, tag_code) VALUES (?, ?)");
       $stmt->bind_param('ss', $item_name, $tag_code);
       if ($stmt->execute()) {

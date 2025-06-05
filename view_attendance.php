@@ -27,7 +27,6 @@ if (!isset($_SESSION['admin_logged_in'])) {
     <a href="logout.php" class="btn btn-danger">Logout</a>
   </div>
 
-  <!-- Filter Section -->
   <div class="row mb-3 g-3 align-items-end">
     <div class="col-md-3">
       <label for="start_date" class="form-label">Start Date</label>
@@ -55,14 +54,13 @@ if (!isset($_SESSION['admin_logged_in'])) {
     </div>
   </div>
 
-  <!-- Table -->
   <div class="table-responsive">
     <table id="records" class="table table-bordered table-striped" style="width:100%">
       <thead>
         <tr>
           <th>#</th>
           <th>Date</th>
-          <th>Roll Number</th>
+          <th>Roll Number / Staff ID</th>
           <th>Location</th>
           <th>Item</th>
           <th>Time In</th>
@@ -75,7 +73,6 @@ if (!isset($_SESSION['admin_logged_in'])) {
 
   <div id="toastContainer" class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1080;"></div>
 
-  <!-- Edit Modal -->
   <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
     <div class="modal-dialog">
       <form id="editForm" class="modal-content">
@@ -119,7 +116,6 @@ if (!isset($_SESSION['admin_logged_in'])) {
   </div>
 
 
-  <!-- Scripts -->
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
@@ -130,7 +126,6 @@ if (!isset($_SESSION['admin_logged_in'])) {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
-  <!-- Custom JS -->
   <script src="view.js"></script>
 </body>
 </html>

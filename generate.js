@@ -7,7 +7,6 @@ const submitBtn = form.querySelector('button[type="submit"]');
 form.addEventListener('submit', async function (e) {
   e.preventDefault();
 
-  // Clear previous QR code & hide download button
   qrcodeDiv.innerHTML = '';
   downloadBtn.style.display = 'none';
 
@@ -35,7 +34,6 @@ form.addEventListener('submit', async function (e) {
     return;
   } */
 
-  // Disable submit button & show loading
   submitBtn.disabled = true;
   loadingSpinner.style.display = 'inline-block';
 
@@ -57,7 +55,6 @@ form.addEventListener('submit', async function (e) {
       throw new Error(result.error || 'Failed to save token');
     }
 
-    // Generate QR code
     new QRCode(qrcodeDiv, {
       text: token,
       width: 300,
