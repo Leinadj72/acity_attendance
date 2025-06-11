@@ -4,7 +4,6 @@ error_reporting(E_ALL);
 header('Content-Type: application/json');
 
 include 'db.php';
-
 date_default_timezone_set('Africa/Accra');
 
 file_put_contents('debug_raw_input.log', file_get_contents('php://input'), FILE_APPEND);
@@ -16,7 +15,7 @@ $token = trim($_POST['token'] ?? '');
 if (empty($tagCode) || empty($token)) {
     exit(json_encode([
         'status' => 'invalid',
-        'message' => 'Tag or token is missing.'
+        'message' => '❌ Tag or token is missing.'
     ]));
 }
 
@@ -33,7 +32,7 @@ try {
     if (!$tokenData) {
         exit(json_encode([
             'status' => 'invalid',
-            'message' => 'Invalid or inactive QR token.'
+            'message' => '❌ Invalid or inactive QR token.'
         ]));
     }
 
@@ -41,6 +40,15 @@ try {
     $item = $tokenData['item'];
     $location = $tokenData['location'];
     $tokenId = $tokenData['id'];
+    $usageCount = (int)$tokenData['usage_count'];
+    $maxUsage = (int)$tokenData['max_usage'];
+
+    if ($usageCount >= $maxUsage) {
+        exit(json_encode([
+            'status' => 'used',
+            'message' => '❌ This QR code has reached its maximum usage.'
+        ]));
+    }
 
     $stmt = $conn->prepare("SELECT * FROM items_tags WHERE tag_code = ? AND item_name = ? AND is_available = 1");
     $stmt->bind_param("ss", $tagCode, $item);
@@ -51,7 +59,7 @@ try {
     if ($tagResult->num_rows === 0) {
         exit(json_encode([
             'status' => 'invalid',
-            'message' => 'Invalid or unavailable tag for this item.'
+            'message' => '❌ This tag is either unavailable or does not match the item.'
         ]));
     }
 
@@ -64,16 +72,10 @@ try {
         $stmt->close();
         exit(json_encode([
             'status' => 'taken',
-            'message' => 'This tag has already been used today.'
+            'message' => '⚠️ This tag has already been used today.'
         ]));
     }
     $stmt->close();
-
-    if (!$tokenId) {
-        echo json_encode(["status" => "error", "message" => "Token ID missing."]);
-        exit;
-    }
-
 
     $timeIn = date("H:i:s");
     $stmt = $conn->prepare("INSERT INTO attendance 
@@ -85,7 +87,7 @@ try {
 
     $timeInFull = date("Y-m-d H:i:s");
     $stmt = $conn->prepare("UPDATE qr_tokens 
-        SET usage_count = usage_count + 1, time_in = ?,last_used_at= NOW(), updated_at = NOW()
+        SET usage_count = usage_count + 1, time_in = ?, last_used_at = NOW(), updated_at = NOW()
         WHERE token = ?");
     $stmt->bind_param("ss", $timeInFull, $token);
     $stmt->execute();

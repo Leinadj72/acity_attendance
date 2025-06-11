@@ -97,13 +97,15 @@ async function handleQRCodeScan(qrCode) {
       if (result.status === 'require_tag') {
         htmlOutput = `
           <div class="alert alert-info text-center">
-            Please enter the tag number for <strong>${result.item}</strong>.
+            Please enter or scan the tag number for <strong>${result.item}</strong>.
           </div>
           <form id="tag-form" class="mb-3">
             <label for="tag" class="form-label">Tag Number:</label>
             <input type="text" id="tag" name="tag" class="form-control mb-2" required autocomplete="off" autofocus>
             <button type="submit" class="btn btn-primary w-100">Submit Tag</button>
           </form>
+          <div id="tag-reader" class="mt-3 border rounded shadow-sm" style="max-width: 300px; margin: 0 auto;"></div>
+          <div class="text-muted text-center mt-1" style="font-size: 0.9rem;">Or scan tag QR code</div>
         `;
       } else {
         htmlOutput = `<div class="alert alert-${
@@ -133,6 +135,26 @@ async function handleQRCodeScan(qrCode) {
         updateStatus('📷 Looking for QR code...');
         startScanner();
       }, 10000);
+    }
+    const tagReaderEl = document.getElementById('tag-reader');
+    if (tagReaderEl) {
+      const tagScanner = new Html5Qrcode('tag-reader');
+
+      tagScanner
+        .start(
+          { facingMode: 'environment' },
+          { fps: 10, qrbox: 200 },
+          (tagCode) => {
+            tagScanner.stop().then(() => {
+              document.getElementById('tag').value = tagCode.trim();
+            });
+          },
+          (error) => {
+          }
+        )
+        .catch((err) => {
+          console.error('Tag QR scanner error:', err);
+        });
     }
   } catch (err) {
     console.error('Fetch error:', err);
