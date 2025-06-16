@@ -40,6 +40,11 @@ if (!isset($_SESSION['admin_logged_in'])) {
       <label for="search_roll_location" class="form-label">Roll Number or Location</label>
       <input type="text" id="search_roll_location" class="form-control" placeholder="Search roll or location" />
     </div>
+    <div class="col-md-3">
+      <label for="search_tag_number" class="form-label">Tag Number</label>
+      <input type="text" id="search_tag_number" class="form-control" placeholder="Search tag number" />
+    </div>
+
     <div class="col-md-2">
       <div class="form-check">
         <input type="checkbox" class="form-check-input" id="pending_only" />
@@ -63,6 +68,7 @@ if (!isset($_SESSION['admin_logged_in'])) {
           <th>Roll Number / Staff ID</th>
           <th>Location</th>
           <th>Item</th>
+          <th>Tag Number</th>
           <th>Time In</th>
           <th>Time Out</th>
           <th>Actions</th>

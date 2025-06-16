@@ -34,9 +34,6 @@ if (isset($_POST['action']) && $_POST['action'] === 'get' && isset($_POST['id'])
   exit;
 }
 
-$totalRecordsResult = mysqli_query($conn, "SELECT COUNT(*) as count FROM attendance");
-$totalRecords = $totalRecordsResult ? mysqli_fetch_assoc($totalRecordsResult)['count'] : 0;
-
 $where = [];
 
 if (!empty($start_date)) {
@@ -58,13 +55,16 @@ if (!empty($searchValue)) {
 
 $whereSql = count($where) ? ' WHERE ' . implode(' AND ', $where) : '';
 
+$totalRecordsResult = mysqli_query($conn, "SELECT COUNT(*) as count FROM attendance");
+$totalRecords = $totalRecordsResult ? mysqli_fetch_assoc($totalRecordsResult)['count'] : 0;
+
 $totalFilteredResult = mysqli_query($conn, "SELECT COUNT(*) as count FROM attendance $whereSql");
 $totalFiltered = $totalFilteredResult ? mysqli_fetch_assoc($totalFilteredResult)['count'] : 0;
 
 $orderColumnIndex = intval($_POST['order'][0]['column'] ?? 1);
 $orderDir = ($_POST['order'][0]['dir'] ?? 'desc') === 'asc' ? 'ASC' : 'DESC';
 
-$columns = ['id', 'date', 'roll_number', 'location', 'item', 'time_in', 'time_out', 'time_out_approved'];
+$columns = ['id', 'date', 'roll_number', 'location', 'item', 'time_in', 'time_out', 'time_out_requested', 'time_out_approved'];
 $orderColumn = $columns[$orderColumnIndex] ?? 'date';
 
 $query = "SELECT * FROM attendance $whereSql ORDER BY time_out IS NULL DESC, $orderColumn $orderDir LIMIT $start, $length";
@@ -73,6 +73,22 @@ $result = mysqli_query($conn, $query);
 $data = [];
 if ($result) {
   while ($row = mysqli_fetch_assoc($result)) {
+    // Determine human-readable status
+    if ($row['time_out_requested'] && $row['time_out_approved']) {
+      $status = 'Approved';
+    } elseif ($row['time_out_requested'] && $row['time_out_approved'] === '0') {
+      $status = 'Rejected';
+    } elseif ($row['time_out_requested']) {
+      $status = 'Pending';
+    } else {
+      $status = 'Not Requested';
+    }
+
+    $row['status'] = $status;
+    $row['time_in'] = $row['time_in'] ? date('Y-m-d H:i:s', strtotime($row['time_in'])) : '';
+    $row['time_out'] = $row['time_out'] ? date('Y-m-d H:i:s', strtotime($row['time_out'])) : '';
+    $row['created_at'] = $row['created_at'] ? date('Y-m-d H:i:s', strtotime($row['created_at'])) : '';
+
     $data[] = $row;
   }
 } else {

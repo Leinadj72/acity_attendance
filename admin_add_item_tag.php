@@ -3,6 +3,13 @@ include 'db.php';
 
 $items = [];
 $result = $conn->query("SELECT DISTINCT item_name FROM items_tags ORDER BY item_name ASC");
+if (isset($_GET['delete'])) {
+  $deleteId = intval($_GET['delete']);
+  $conn->query("DELETE FROM items_tags WHERE id = $deleteId");
+  header("Location: add_item_tag.php");
+  exit;
+}
+
 while ($row = $result->fetch_assoc()) {
   $items[] = $row['item_name'];
 }
@@ -106,6 +113,7 @@ $result = $conn->query("SELECT * FROM items_tags ORDER BY created_at DESC");
         <th>Tag Code</th>
         <th>QR Code</th>
         <th>Available</th>
+        <th>Actions</th>
       </tr>
     </thead>
     <tbody>
@@ -120,6 +128,9 @@ $result = $conn->query("SELECT * FROM items_tags ORDER BY created_at DESC");
           </button>
         </td>
         <td><?= $row['is_available'] ? 'Yes' : 'No' ?></td>
+        <td>
+          <a href="?delete=<?= $row['id'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('Delete this tag?')">Delete</a>
+        </td>
       </tr>
       <?php endwhile; ?>
     </tbody>

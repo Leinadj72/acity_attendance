@@ -23,6 +23,7 @@ $(document).ready(function () {
         d.start_date = $('#start_date').val();
         d.end_date = $('#end_date').val();
         d.search = $('#search_roll_location').val();
+        d.tag_number = $('#search_tag_number').val();
         d.pending_only = $('#pending_only').is(':checked') ? '1' : '0';
       },
       dataSrc: 'data',
@@ -33,6 +34,7 @@ $(document).ready(function () {
       { data: 'roll_number' },
       { data: 'location' },
       { data: 'item' },
+      { data: 'tag_number' },
       { data: 'time_in' },
       { data: 'time_out' },
       {
@@ -63,7 +65,7 @@ $(document).ready(function () {
   });
 
   $('#resetBtn').click(function () {
-    $('#start_date, #end_date, #search_roll_location').val('');
+    $('#start_date, #end_date, #search_roll_location, #search_tag_number').val('');
     $('#pending_only').prop('checked', false);
     table.ajax.reload();
   });
