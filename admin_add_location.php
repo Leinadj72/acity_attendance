@@ -2,20 +2,17 @@
 include 'db.php';
 $msg = '';
 
-// Handle Add or Update
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $location = trim($_POST['location']);
   $edit_id = $_POST['edit_id'] ?? '';
 
   if ($location !== '') {
     if ($edit_id) {
-      // Update existing location
       $stmt = $conn->prepare("UPDATE locations SET name = ? WHERE id = ?");
       $stmt->bind_param("si", $location, $edit_id);
       $stmt->execute();
       $msg = "✅ Location updated.";
     } else {
-      // Add new location
       $stmt = $conn->prepare("INSERT INTO locations (name) VALUES (?)");
       $stmt->bind_param("s", $location);
       $stmt->execute();
@@ -26,7 +23,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   }
 }
 
-// Handle Delete
 if (isset($_GET['delete'])) {
   $del_id = $_GET['delete'];
   $conn->query("DELETE FROM locations WHERE id = " . intval($del_id));

@@ -57,7 +57,6 @@ try {
   $id = 1;
 
   while ($row = $result->fetch_assoc()) {
-    // Format status
     if ($row['time_out_requested'] && $row['time_out_approved']) {
       $status = 'Approved';
     } elseif ($row['time_out_requested'] && $row['time_out_approved'] === '0') {
@@ -71,7 +70,6 @@ try {
     $row['index'] = $id++;
     $row['status'] = $status;
 
-    // Format timestamps
     $row['time_in'] = $row['time_in'] ? date('Y-m-d H:i:s', strtotime($row['time_in'])) : '';
     $row['time_out'] = $row['time_out'] ? date('Y-m-d H:i:s', strtotime($row['time_out'])) : '';
     $row['created_at'] = $row['created_at'] ? date('Y-m-d H:i:s', strtotime($row['created_at'])) : '';

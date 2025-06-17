@@ -73,7 +73,6 @@ $result = mysqli_query($conn, $query);
 $data = [];
 if ($result) {
   while ($row = mysqli_fetch_assoc($result)) {
-    // Determine human-readable status
     if ($row['time_out_requested'] && $row['time_out_approved']) {
       $status = 'Approved';
     } elseif ($row['time_out_requested'] && $row['time_out_approved'] === '0') {
