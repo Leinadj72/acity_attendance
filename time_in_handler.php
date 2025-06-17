@@ -18,11 +18,11 @@ if (!$roll_number || !$item || !$tag || !$location) {
     ]));
 }
 
-$stmt = $conn->prepare("SELECT * FROM items_tags WHERE tag_number = ? AND item_name = ?");
+$stmt = $conn->prepare("SELECT is_available FROM items_tags WHERE tag_number = ? AND item_name = ?");
 $stmt->bind_param("ss", $tag, $item);
 $stmt->execute();
-$tagResult = $stmt->get_result();
-$tagData = $tagResult->fetch_assoc();
+$result = $stmt->get_result();
+$tagData = $result->fetch_assoc();
 $stmt->close();
 
 if (!$tagData) {
@@ -35,7 +35,7 @@ if (!$tagData) {
 if ((int)$tagData['is_available'] !== 1) {
     exit(json_encode([
         'status' => 'error',
-        'message' => '❌ Item is currently unavailable.'
+        'message' => '❌ This item is currently unavailable.'
     ]));
 }
 
@@ -55,16 +55,15 @@ if ($checkResult->num_rows > 0) {
     ]));
 }
 
+$insert = $conn->prepare("INSERT INTO attendance (roll_number, item, tag_number, location, date, time_in) VALUES (?, ?, ?, ?, ?, ?)");
+$insert->bind_param("ssssss", $roll_number, $item, $tag, $location, $date, $time_in);
+$insert->execute();
+$insert->close();
 
-$stmt = $conn->prepare("INSERT INTO attendance (roll_number, item, tag_number, location, date, time_in) VALUES (?, ?, ?, ?, ?, ?)");
-$stmt->bind_param("ssssss", $roll_number, $item, $tag, $location, $date, $time_in);
-$stmt->execute();
-$stmt->close();
-
-$updateStmt = $conn->prepare("UPDATE items_tags SET is_available = 0 WHERE tag_number = ?");
-$updateStmt->bind_param("s", $tag);
-$updateStmt->execute();
-$updateStmt->close();
+$update = $conn->prepare("UPDATE items_tags SET is_available = 0 WHERE tag_number = ?");
+$update->bind_param("s", $tag);
+$update->execute();
+$update->close();
 
 echo json_encode([
     'status' => 'success',

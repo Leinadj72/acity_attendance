@@ -29,7 +29,7 @@ if (!$tagData) {
     ]));
 }
 
-$stmt = $conn->prepare("SELECT id FROM attendance WHERE tag_number = ? AND time_out IS NULL ORDER BY id DESC LIMIT 1");
+$stmt = $conn->prepare("SELECT id FROM attendance WHERE tag_number = ? AND time_out_requested IS NULL AND time_out IS NULL ORDER BY id DESC LIMIT 1");
 $stmt->bind_param("s", $tag);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -44,19 +44,19 @@ if (!$attendance) {
 }
 
 $attendance_id = $attendance['id'];
-$time_out = date('H:i:s');
+$time_out_requested = date('H:i:s');
 
-$updateStmt = $conn->prepare("UPDATE attendance SET time_out = ? WHERE id = ?");
-$updateStmt->bind_param("si", $time_out, $attendance_id);
-$updateStmt->execute();
-$updateStmt->close();
+$update = $conn->prepare("UPDATE attendance SET time_out_requested = ? WHERE id = ?");
+$update->bind_param("si", $time_out_requested, $attendance_id);
+$update->execute();
+$update->close();
 
-$updateItemStmt = $conn->prepare("UPDATE items_tags SET is_available = 1 WHERE tag_number = ?");
-$updateItemStmt->bind_param("s", $tag);
-$updateItemStmt->execute();
-$updateItemStmt->close();
+$markAvailable = $conn->prepare("UPDATE items_tags SET is_available = 1 WHERE tag_number = ?");
+$markAvailable->bind_param("s", $tag);
+$markAvailable->execute();
+$markAvailable->close();
 
 echo json_encode([
     'status' => 'success',
-    'message' => "✅ Time Out recorded at $time_out. Item marked as available again."
+    'message' => "✅ Time Out requested at $time_out_requested. Item marked as available."
 ]);

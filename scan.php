@@ -34,21 +34,13 @@
   </style>
 </head>
 <body class="container py-5">
-  <h2 class="text-center mb-4">📸 QR Attendance Scanner</h2>
+  <h2 class="text-center mb-4">📸 QR Attendance System</h2>
 
-  <div id="reader" class="border rounded shadow-sm"></div>
-
-  <div id="status-message" class="text-muted mt-3">
-    <div class="spinner-border text-secondary me-2" role="status">
-      <span class="visually-hidden">Loading...</span>
-    </div>
-    Waiting for QR code...
+  <div class="text-center">
+    <a href="timein.php" class="btn btn-success btn-lg me-3">🟢 Time In</a>
+    <a href="timeout.php" class="btn btn-danger btn-lg">🔴 Time Out</a>
   </div>
-
-  <div id="result" class="mt-4"></div>
-
-  <script src="https://unpkg.com/html5-qrcode@2.3.7/html5-qrcode.min.js"></script>
-
-  <script src="scan.js"></script>
 </body>
+
+
 </html>
