@@ -68,4 +68,5 @@ $update->close();
 echo json_encode([
     'status' => 'success',
     'message' => "✅ Time In recorded at $time_in. Item marked as unavailable.",
+    'redirect' => 'scan.php'
 ]);

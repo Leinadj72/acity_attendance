@@ -16,7 +16,7 @@ if (!$id) {
   exit;
 }
 
-$stmt = $conn->prepare("SELECT token_id FROM attendance WHERE id = ?");
+$stmt = $conn->prepare("SELECT tag_number, item FROM attendance WHERE id = ?");
 $stmt->bind_param("i", $id);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -27,16 +27,17 @@ if ($result->num_rows !== 1) {
 }
 
 $row = $result->fetch_assoc();
-$token_id = $row['token_id'];
+$tag_number = $row['tag_number'];
+$item = $row['item'];
 $stmt->close();
 
-$stmt = $conn->prepare("UPDATE attendance SET time_out_requested = 0, time_out_approved = 0 WHERE id = ?");
+$stmt = $conn->prepare("
+  UPDATE attendance 
+  SET time_out_requested = 0, 
+      time_out_approved = 0 
+  WHERE id = ?
+");
 $stmt->bind_param("i", $id);
-$stmt->execute();
-$stmt->close();
-
-$stmt = $conn->prepare("UPDATE qr_tokens SET status = 'active', usage_count = GREATEST(usage_count - 1, 0) WHERE id = ?");
-$stmt->bind_param("i", $token_id);
 $stmt->execute();
 $stmt->close();
 

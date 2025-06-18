@@ -143,6 +143,12 @@ async function handleQRCodeScan(qrCode) {
               data.status === 'success' ? 'success' : 'danger',
               data.message
             );
+            if (data.status === 'success' && data.redirect) {
+              setTimeout(() => {
+                window.location.href = data.redirect;
+              }, 2000);
+              return;
+            }
           } catch {
             showAlert('danger', '❌ Network error.');
           }
@@ -224,6 +230,12 @@ async function handleQRCodeScan(qrCode) {
               data.status === 'success' ? 'success' : 'danger',
               data.message
             );
+            if (data.status === 'success' && data.redirect) {
+              setTimeout(() => {
+                window.location.href = data.redirect;
+              }, 2000);
+              return;
+            }
           } catch {
             showAlert('danger', '❌ Network error.');
           }

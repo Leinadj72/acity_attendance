@@ -17,7 +17,7 @@ if (!$id) {
   exit;
 }
 
-$stmt = $conn->prepare("SELECT token_id, item FROM attendance WHERE id = ?");
+$stmt = $conn->prepare("SELECT tag_number, item FROM attendance WHERE id = ?");
 $stmt->bind_param("i", $id);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -28,7 +28,7 @@ if ($result->num_rows !== 1) {
 }
 
 $row = $result->fetch_assoc();
-$token_id = $row['token_id'];
+$tag_number = $row['tag_number'];
 $item = $row['item'];
 $stmt->close();
 
@@ -43,19 +43,13 @@ $stmt->execute();
 $stmt->close();
 
 $stmt = $conn->prepare("
-  UPDATE qr_tokens 
-  SET last_used_at = NOW(),
-      time_out = IFNULL(time_out, NOW())
-  WHERE id = ?
+  UPDATE items_tags 
+  SET is_available = 1 
+  WHERE tag_number = ? AND item_name = ?
 ");
-$stmt->bind_param("i", $token_id);
+$stmt->bind_param("ss", $tag_number, $item);
 $stmt->execute();
 $stmt->close();
 
-$stmt = $conn->prepare("UPDATE items_tags SET is_available = 1 WHERE item_name = ?");
-$stmt->bind_param("s", $item);
-$stmt->execute();
-$stmt->close();
-
-echo json_encode(['success' => true, 'message' => 'Time Out approved and item returned']);
+echo json_encode(['success' => true, 'message' => 'Time Out approved and item marked as available']);
 $conn->close();

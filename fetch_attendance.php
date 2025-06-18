@@ -37,10 +37,13 @@ try {
     $where[] = "(time_out_requested = 1 AND time_out_approved = 0)";
   }
 
-  $sql = "SELECT * FROM attendance";
+  $sql = "SELECT id, date, roll_number, location, item, tag_number, time_in, time_out, time_out_requested, time_out_approved, created_at
+          FROM attendance";
+
   if ($where) {
     $sql .= " WHERE " . implode(" AND ", $where);
   }
+
   $sql .= " ORDER BY date DESC";
 
   $stmt = $conn->prepare($sql);
@@ -57,7 +60,7 @@ try {
   $id = 1;
 
   while ($row = $result->fetch_assoc()) {
-    if ($row['time_out_requested'] && $row['time_out_approved']) {
+    if ($row['time_out_requested'] && $row['time_out_approved'] === '1') {
       $status = 'Approved';
     } elseif ($row['time_out_requested'] && $row['time_out_approved'] === '0') {
       $status = 'Rejected';
@@ -69,6 +72,9 @@ try {
 
     $row['index'] = $id++;
     $row['status'] = $status;
+
+    $row['time_out_requested'] = (int)$row['time_out_requested'];
+    $row['time_out_approved'] = (int)$row['time_out_approved'];
 
     $row['time_in'] = $row['time_in'] ? date('Y-m-d H:i:s', strtotime($row['time_in'])) : '';
     $row['time_out'] = $row['time_out'] ? date('Y-m-d H:i:s', strtotime($row['time_out'])) : '';
