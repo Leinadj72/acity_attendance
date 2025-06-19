@@ -126,10 +126,13 @@ async function handleQRCodeScan(qrCode) {
           e.preventDefault();
 
           const formData = new URLSearchParams({
-            token: scannedRollNumber,
+            roll_number: result.student?.roll_number || scannedRollNumber,
             item: itemSelect.value,
             tag_number: tagInput.value.trim(),
             location: locationSelect.value,
+            name: result.student?.name || "",
+            email: result.student?.email || "",
+            phone: result.student?.phone || "",
           });
 
           try {
@@ -149,7 +152,6 @@ async function handleQRCodeScan(qrCode) {
               setTimeout(() => {
                 window.location.href = data.redirect;
               }, 2000);
-              return;
             }
           } catch {
             showAlert("danger", "❌ Network error.");
