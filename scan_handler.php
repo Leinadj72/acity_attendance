@@ -47,15 +47,18 @@ if ($mode === 'in') {
         }
     }
 
-    // ✅ Allow Time In – Return available items and dummy locations (or static list)
+    // ✅ Allow Time In – Return available items and dynamic locations
     $items = [];
     $itemQuery = $conn->query("SELECT DISTINCT item_name FROM items_tags WHERE is_available = 1");
     while ($row = $itemQuery->fetch_assoc()) {
         $items[] = $row['item_name'];
     }
 
-    // If you don’t have a locations table, use static values instead
-    $locations = ['Main Lab', 'Library', 'Workshop', 'Studio'];
+    $locations = [];
+    $locationQuery = $conn->query("SELECT location_name FROM locations");
+    while ($row = $locationQuery->fetch_assoc()) {
+        $locations[] = $row['location_name'];
+    }
 
     echo json_encode([
         'status' => 'require_inputs',
