@@ -14,7 +14,7 @@ $(document).ready(function () {
     toast.on("hidden.bs.toast", () => toast.remove());
   }
 
-  const table = $("#records").DataTable({
+  const table = $("#attendanceTable").DataTable({
     dom: "Bfrtip",
     buttons: [
       { extend: "excelHtml5", title: "Attendance Records" },

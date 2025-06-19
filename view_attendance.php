@@ -21,15 +21,17 @@ if (!isset($_SESSION['admin_logged_in'])) {
   <style>
     .badge-Active {
       background-color: #0d6efd;
+      color: white;
     }
 
     .badge-Pending {
       background-color: #ffc107;
-      color: #000;
+      color: #212529;
     }
 
     .badge-Approved {
       background-color: #28a745;
+      color: white;
     }
 
     .badge-Rejected {
@@ -38,6 +40,43 @@ if (!isset($_SESSION['admin_logged_in'])) {
 
     .badge-Completed {
       background-color: #6c757d;
+      color: white;
+    }
+
+    table.dataTable thead th {
+      background-color: #f8f9fa;
+      color: #333;
+      font-weight: 600;
+      border-bottom: 2px solid #dee2e6;
+      padding: 0.75rem 0.75rem;
+    }
+
+    table.dataTable tbody td {
+      padding: 0.6rem;
+    }
+
+    .badge {
+      font-size: 0.85rem;
+      padding: 0.4em 0.6em;
+    }
+
+    /* Responsive overflow for small screens */
+    .dataTables_wrapper {
+      overflow-x: auto;
+    }
+
+    /* Remove weird border conflicts */
+    table.dataTable.no-footer {
+      border-bottom: none;
+    }
+
+    table.dataTable tbody tr:hover {
+      background-color: #eef6ff;
+    }
+
+    table.dataTable td,
+    table.dataTable th {
+      border-color: #dee2e6;
     }
   </style>
 </head>
@@ -77,35 +116,39 @@ if (!isset($_SESSION['admin_logged_in'])) {
     </div>
   </div>
 
+  <div id="toastContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 9999;"></div>
+
+
   <!-- Table -->
-  <table id="attendanceTable" class="display nowrap table table-bordered" style="width:100%">
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Date</th>
-        <th>Roll Number</th>
-        <th>Name</th>
-        <th>Email</th>
-        <th>Phone</th>
-        <th>Item</th>
-        <th>Tag</th>
-        <th>Location</th>
-        <th>Time In</th>
-        <th>Time Out</th>
-        <th>Requested At</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <div class="table-responsive mt-4">
+    <table id="attendanceTable" class="table table-hover table-striped table-bordered align-middle" style="width:100%">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Date</th>
+          <th>Roll Number</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Item</th>
+          <th>Tag</th>
+          <th>Location</th>
+          <th>Time In</th>
+          <th>Time Out</th>
+          <th>Requested At</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
 
-  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-  <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
-  <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
-  <script src="./view.js"></script>
+    <script src="./view.js"></script>
 </body>
 
 </html>

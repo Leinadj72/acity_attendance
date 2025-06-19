@@ -71,7 +71,14 @@ $orderDir = ($_POST['order'][0]['dir'] ?? 'desc') === 'asc' ? 'ASC' : 'DESC';
 $columns = ['id', 'date', 'roll_number', 'location', 'item', 'time_in', 'time_out', 'time_out_requested', 'time_out_approved', 'time_out_requested_at'];
 $orderColumn = $columns[$orderColumnIndex] ?? 'date';
 
-$query = "SELECT * FROM attendance $whereSql ORDER BY time_out IS NULL DESC, $orderColumn $orderDir LIMIT $start, $length";
+$query = "
+  SELECT * FROM attendance 
+  $whereSql 
+  ORDER BY 
+    (time_out IS NULL OR time_out = '') DESC, 
+    $orderColumn $orderDir 
+  LIMIT $start, $length
+";
 $result = mysqli_query($conn, $query);
 
 $data = [];

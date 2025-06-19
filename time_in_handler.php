@@ -52,25 +52,66 @@ $name = $user['name'] ?? '';
 $email = $user['email'] ?? '';
 $phone = $user['phone'] ?? ($user['phone2'] ?? '');
 
-// 🔁 Step 2: Check if tag is already in use (no time_out)
+// 🔒 Step 2: Ensure student does not already have an active attendance
+$activeCheck = $conn->prepare("
+    SELECT id FROM attendance 
+    WHERE roll_number = ? 
+      AND date = ? 
+      AND time_out IS NULL 
+      AND (time_out_requested IS NULL OR time_out_requested = 0)
+      AND time_out_approved = 0
+");
+$activeCheck->bind_param("ss", $roll_number, $date);
+$activeCheck->execute();
+$activeCheck->store_result();
+
+if ($activeCheck->num_rows > 0) {
+    echo json_encode(['success' => false, 'message' => '⚠️ You already have an active item. Return it before taking another.']);
+    $activeCheck->close();
+    exit;
+}
+$activeCheck->close();
+
+// 🔒 Step 3: Ensure the same item at the same location is not in use
+$itemConflict = $conn->prepare("
+    SELECT id FROM attendance 
+    WHERE item = ? AND location = ? 
+      AND date = ? 
+      AND time_out IS NULL 
+      AND (time_out_requested IS NULL OR time_out_requested = 0)
+      AND time_out_approved = 0
+");
+$itemConflict->bind_param("sss", $item, $location, $date);
+$itemConflict->execute();
+$itemConflict->store_result();
+
+if ($itemConflict->num_rows > 0) {
+    echo json_encode(['success' => false, 'message' => '⚠️ This item is already in use at this location.']);
+    $itemConflict->close();
+    exit;
+}
+$itemConflict->close();
+
+// 🔁 Step 4: Check if tag is already in use (no time_out)
 $check = $conn->prepare("SELECT id FROM attendance WHERE tag_number = ? AND time_out IS NULL");
 $check->bind_param("s", $tag_number);
 $check->execute();
 $check->store_result();
 
 if ($check->num_rows > 0) {
-    echo json_encode(['success' => false, 'message' => 'This tag number is already in use.']);
+    echo json_encode(['success' => false, 'message' => '⚠️ This tag number is already in use.']);
     $check->close();
     exit;
 }
 $check->close();
+
 
 // ✅ Step 3: Save attendance
 $stmt = $conn->prepare("INSERT INTO attendance (roll_number, name, email, phone, date, item, tag_number, location, time_in, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
 $stmt->bind_param("sssssssss", $roll_number, $name, $email, $phone, $date, $item, $tag_number, $location, $time_in);
 
 if ($stmt->execute()) {
-    echo json_encode(['success' => true, 'status' => 'success', 'message' => 'Time In recorded successfully.']);
+    echo json_encode(['success' => true, 'status' => 'success', 'message' => 'Time In recorded successfully.', 'redirect' => 'scan.php']);
 } else {
     echo json_encode(['success' => false, 'status' => 'error', 'message' => 'Failed to save attendance.']);
 }

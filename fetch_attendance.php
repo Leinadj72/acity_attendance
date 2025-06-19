@@ -69,7 +69,10 @@ try {
     $sql .= " WHERE " . implode(" AND ", $where);
   }
 
-  $sql .= " ORDER BY date DESC, created_at DESC";
+  $sql .= " ORDER BY 
+    (time_out IS NULL) DESC,
+    date DESC, 
+    created_at DESC";
 
   $stmt = $conn->prepare($sql);
 

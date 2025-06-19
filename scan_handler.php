@@ -25,7 +25,7 @@ if (!in_array($mode, ['in', 'out'])) {
 
 $today = date('Y-m-d');
 
-// Fetch today's attendance records for this roll number
+// Get today's records for the roll number
 $stmt = $conn->prepare("SELECT * FROM attendance WHERE roll_number = ? AND date = ? ORDER BY id DESC");
 $stmt->bind_param("ss", $roll_number, $today);
 $stmt->execute();
@@ -34,7 +34,6 @@ $attRecords = $result->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
 
 if ($mode === 'in') {
-    // Check if the user has already timed in but not timed out or not requested time out
     foreach ($attRecords as $record) {
         if (empty($record['time_out']) && empty($record['time_out_requested'])) {
             exit(json_encode([
@@ -69,24 +68,26 @@ if ($mode === 'in') {
 }
 
 if ($mode === 'out') {
-    // Look for a valid attendance record to time out from
     foreach ($attRecords as $record) {
-        if (empty($record['time_out']) && empty($record['time_out_requested'])) {
+        if (
+            empty($record['time_out']) &&
+            (empty($record['time_out_requested']) || $record['time_out_requested'] == 0) &&
+            $record['time_out_approved'] == 0
+        ) {
             echo json_encode([
                 'status' => 'ready_for_timeout',
-                'message' => '✅ Proceed to confirm Time Out.',
+                'message' => '✅ Proceed to enter your tag number for Time Out.',
                 'roll_number' => $roll_number,
-                'record_id' => $record['id'],
-                'tag_number' => $record['tag_number']
+                'tag_number' => $record['tag_number'],
+                'record_id' => $record['id']
             ]);
             exit;
         }
     }
 
-    // No active time-in record found
     echo json_encode([
         'status' => 'not_timed_in',
-        'message' => '⚠️ No active Time In record found.'
+        'message' => '⚠️ No active Time In record found for Time Out.'
     ]);
     exit;
 }
