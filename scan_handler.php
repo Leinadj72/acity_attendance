@@ -27,16 +27,17 @@ if (!$response) {
 }
 
 $data = json_decode($response, true);
-if (!isset($data['student_roll_number'])) {
+if (!empty($data['data']['student_roll_number'])) {
+    $student = [
+        'roll_number' => $data['data']['student_roll_number'],
+        'name' => $data['data']['name'] ?? '',
+        'email' => $data['data']['email'] ?? '',
+        'phone' => $data['data']['phone'] !== 'NULL' ? $data['data']['phone'] : ($data['data']['phone2'] ?? ''),
+    ];
+    $roll_number = $student['roll_number'];
+} else {
     exit(json_encode(['status' => 'invalid', 'message' => '❌ Invalid QR code or student not found.']));
-}
-
-$student = [
-    'roll_number' => $data['student_roll_number'],
-    'name'        => $data['name'] ?? '',
-    'email'       => $data['email'] ?? '',
-    'phone'       => $data['phone 1'] ?? ($data['phone 2'] ?? '')
-];
+};
 
 $roll_number = $student['roll_number'];
 $today = date('Y-m-d');
