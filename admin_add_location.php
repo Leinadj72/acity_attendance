@@ -3,7 +3,7 @@ include 'db.php';
 $msg = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  $location = trim($_POST['location']);
+  $location = trim($_POST['location'] ?? '');
   $edit_id = $_POST['edit_id'] ?? '';
 
   if ($location !== '') {
@@ -24,16 +24,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 if (isset($_GET['delete'])) {
-  $del_id = $_GET['delete'];
-  $conn->query("DELETE FROM locations WHERE id = " . intval($del_id));
+  $del_id = intval($_GET['delete']);
+  $conn->query("DELETE FROM locations WHERE id = $del_id");
   header("Location: add_location.php");
   exit;
 }
 
 $edit_location = null;
 if (isset($_GET['edit'])) {
-  $id = $_GET['edit'];
-  $result = $conn->query("SELECT * FROM locations WHERE id = " . intval($id));
+  $id = intval($_GET['edit']);
+  $result = $conn->query("SELECT * FROM locations WHERE id = $id");
   $edit_location = $result->fetch_assoc();
 }
 
@@ -53,14 +53,14 @@ $locations = $conn->query("SELECT * FROM locations ORDER BY location_name ASC");
   <h1 class="mb-4">Manage Locations</h1>
 
   <?php if (!empty($msg)): ?>
-    <div class="alert alert-info"><?= $msg ?></div>
+    <div class="alert alert-info"><?= htmlspecialchars($msg) ?></div>
   <?php endif; ?>
 
   <form method="POST" class="mb-4">
-    <input type="hidden" location_name="edit_id" value="<?= $edit_location['id'] ?? '' ?>">
+    <input type="hidden" name="edit_id" value="<?= $edit_location['id'] ?? '' ?>">
     <div class="mb-3">
       <label class="form-label"><?= $edit_location ? 'Edit Location' : 'Add New Location' ?></label>
-      <input type="text" location_name="location" class="form-control" value="<?= $edit_location['location_name'] ?? '' ?>" required>
+      <input type="text" name="location" class="form-control" value="<?= htmlspecialchars($edit_location['location_name'] ?? '') ?>" required>
     </div>
     <button type="submit" class="btn btn-<?= $edit_location ? 'warning' : 'primary' ?>">
       <?= $edit_location ? 'Update' : 'Add' ?> Location
@@ -75,17 +75,12 @@ $locations = $conn->query("SELECT * FROM locations ORDER BY location_name ASC");
     <thead>
       <tr>
         <th>Name</th>
-        <th>Actions</th>
       </tr>
     </thead>
     <tbody>
       <?php while ($loc = $locations->fetch_assoc()): ?>
         <tr>
           <td><?= htmlspecialchars($loc['location_name']) ?></td>
-          <td>
-            <a href="?edit=<?= $loc['id'] ?>" class="btn btn-sm btn-warning">Edit</a>
-            <a href="?delete=<?= $loc['id'] ?>" onclick="return confirm('Delete this location?')" class="btn btn-sm btn-danger">Delete</a>
-          </td>
         </tr>
       <?php endwhile; ?>
     </tbody>
