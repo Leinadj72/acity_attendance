@@ -9,7 +9,6 @@ $roll_number = trim($_POST['roll_number'] ?? '');
 $today = date('Y-m-d');
 
 if (!empty($tag) && !empty($item) && empty($roll_number)) {
-    // 🟢 Time In verification
     $stmt = $conn->prepare("
         SELECT id FROM items_tags 
         WHERE tag_number = ? 
@@ -25,7 +24,6 @@ if (!empty($tag) && !empty($item) && empty($roll_number)) {
 }
 
 if (!empty($tag) && !empty($roll_number) && empty($item)) {
-    // 🔴 Time Out verification
     $stmt = $conn->prepare("
         SELECT id FROM attendance
         WHERE tag_number = ?
@@ -43,7 +41,6 @@ if (!empty($tag) && !empty($roll_number) && empty($item)) {
     exit;
 }
 
-// ⚠️ No valid combination of parameters
 echo json_encode([
     'valid' => false,
     'message' => 'Invalid parameters. Provide either (tag + item) for Time In or (tag + roll_number) for Time Out.'

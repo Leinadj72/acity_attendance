@@ -16,7 +16,6 @@ if (empty($tag) || empty($roll_number)) {
     ]));
 }
 
-// Check tag exists
 $stmt = $conn->prepare("SELECT item_name FROM items_tags WHERE tag_number = ?");
 $stmt->bind_param("s", $tag);
 $stmt->execute();
@@ -31,7 +30,6 @@ if (!$tagData) {
     ]));
 }
 
-// Check attendance record
 $stmt = $conn->prepare("
   SELECT id FROM attendance
   WHERE tag_number = ? AND roll_number = ?
@@ -53,7 +51,6 @@ if (!$attendance) {
     ]));
 }
 
-// Update time_out_requested
 $conn->begin_transaction();
 
 try {

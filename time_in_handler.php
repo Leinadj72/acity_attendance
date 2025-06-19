@@ -13,13 +13,11 @@ $item = trim($_POST['item'] ?? '');
 $tag_number = trim($_POST['tag_number'] ?? '');
 $location = trim($_POST['location'] ?? '');
 
-// 🔍 Validate required fields
 if (!$roll_number || !$item || !$tag_number || !$location) {
     echo json_encode(['status' => 'error', 'message' => '❌ Missing required fields.']);
     exit;
 }
 
-// 🔐 Verify tag availability
 $stmt = $conn->prepare("SELECT id FROM items_tags WHERE tag_number = ? AND item_name = ? AND is_available = 1");
 $stmt->bind_param("ss", $tag_number, $item);
 $stmt->execute();
@@ -30,7 +28,6 @@ if ($result->num_rows === 0) {
 }
 $stmt->close();
 
-// 🔄 Prevent duplicate Time In
 $today = date('Y-m-d');
 $stmt = $conn->prepare("SELECT id FROM attendance WHERE roll_number = ? AND date = ? AND time_out IS NULL AND time_out_requested IS NULL");
 $stmt->bind_param("ss", $roll_number, $today);
@@ -42,7 +39,6 @@ if ($existing->num_rows > 0) {
 }
 $stmt->close();
 
-// 🕒 Record Time In
 $now = date('H:i:s');
 $stmt = $conn->prepare("INSERT INTO attendance 
     (roll_number, name, email, phone, date, time_in, item, tag_number, location, created_at) 
@@ -51,7 +47,6 @@ $stmt->bind_param("sssssssss", $roll_number, $name, $email, $phone, $today, $now
 $success = $stmt->execute();
 
 if ($success) {
-    // 🔄 Mark tag as unavailable
     $update = $conn->prepare("UPDATE items_tags SET is_available = 0 WHERE tag_number = ?");
     $update->bind_param("s", $tag_number);
     $update->execute();

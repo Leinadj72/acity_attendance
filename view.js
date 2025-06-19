@@ -104,10 +104,8 @@ $(document).ready(function () {
     ],
   });
 
-  // Filter
   $("#filterBtn").on("click", () => table.ajax.reload());
 
-  // Reset filters
   $("#resetBtn").on("click", function () {
     $("#start_date, #end_date, #search_roll_location, #search_tag_number").val(
       ""
@@ -116,7 +114,6 @@ $(document).ready(function () {
     table.ajax.reload();
   });
 
-  // Approve Time Out
   $("#attendanceTable").on("click", ".approve-btn", function () {
     const id = $(this).data("id");
     const button = $(this).prop("disabled", true).text("Approving...");
@@ -137,7 +134,6 @@ $(document).ready(function () {
       });
   });
 
-  // Reject Time Out
   $("#attendanceTable").on("click", ".reject-btn", function () {
     const id = $(this).data("id");
     const button = $(this).prop("disabled", true).text("Rejecting...");
@@ -158,7 +154,6 @@ $(document).ready(function () {
       });
   });
 
-  // Edit (Optional: Only works if modal and edit_attendance.php exist)
   $("#attendanceTable").on("click", ".edit-btn", function () {
     const rowData = table.row($(this).closest("tr")).data();
     $("#edit_id").val(rowData.id);

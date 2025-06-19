@@ -103,7 +103,6 @@ async function handleQRCodeScan(qrCode) {
             } else {
               alert("❌ Invalid tag for selected item. Please try again.");
               tagInput.value = "";
-              // continue scanning
             }
           } catch {
             alert("❌ Error verifying tag. Please try again.");
@@ -196,7 +195,6 @@ async function handleQRCodeScan(qrCode) {
             } else {
               alert("❌ Invalid tag or not linked to you. Please try again.");
               tagInput.value = "";
-              // continue scanning
             }
           } catch {
             alert("❌ Error verifying tag. Please try again.");

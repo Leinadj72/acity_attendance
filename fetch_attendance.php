@@ -16,7 +16,6 @@ $where = "1";
 $params = [];
 $types = "";
 
-// Date filter
 if (!empty($start_date)) {
   $where .= " AND date >= ?";
   $params[] = $start_date;
@@ -28,7 +27,6 @@ if (!empty($end_date)) {
   $types .= "s";
 }
 
-// Search by roll number or location
 if (!empty($search)) {
   $where .= " AND (roll_number LIKE ? OR location LIKE ?)";
   $params[] = "%$search%";
@@ -36,14 +34,12 @@ if (!empty($search)) {
   $types .= "ss";
 }
 
-// Search by tag number
 if (!empty($tag_number)) {
   $where .= " AND tag_number LIKE ?";
   $params[] = "%$tag_number%";
   $types .= "s";
 }
 
-// Pending time out filter
 if ($pending_only) {
   $where .= " AND (time_out IS NULL AND (time_out_requested IS NULL OR time_out_requested = 0))";
 }
@@ -61,7 +57,6 @@ $data = [];
 $index = 1;
 
 while ($row = $result->fetch_assoc()) {
-  // Determine status
   if ($row['time_out'] && $row['time_out_approved']) {
     $status = "Completed";
   } elseif ($row['time_out_requested'] && !$row['time_out_approved']) {

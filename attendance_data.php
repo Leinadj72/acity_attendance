@@ -25,7 +25,6 @@ $search_roll_location = $_POST['search_roll_location'] ?? '';
 $tag_number = $_POST['tag_number'] ?? '';
 $pending_only = isset($_POST['pending_only']) && $_POST['pending_only'] === "1";
 
-// Handle single record fetch
 if (isset($_POST['action']) && $_POST['action'] === 'get' && isset($_POST['id'])) {
   $id = intval($_POST['id']);
   $res = mysqli_query($conn, "SELECT * FROM attendance WHERE id = $id LIMIT 1");
@@ -38,7 +37,6 @@ if (isset($_POST['action']) && $_POST['action'] === 'get' && isset($_POST['id'])
   exit;
 }
 
-// Filters
 $where = [];
 
 if (!empty($start_date)) {
@@ -67,20 +65,17 @@ if ($pending_only) {
 
 $whereSql = count($where) ? 'WHERE ' . implode(' AND ', $where) : '';
 
-// Count total records
 $totalRecordsQuery = mysqli_query($conn, "SELECT COUNT(*) as count FROM attendance");
 $totalRecords = $totalRecordsQuery ? mysqli_fetch_assoc($totalRecordsQuery)['count'] : 0;
 
 $totalFilteredQuery = mysqli_query($conn, "SELECT COUNT(*) as count FROM attendance $whereSql");
 $totalFiltered = $totalFilteredQuery ? mysqli_fetch_assoc($totalFilteredQuery)['count'] : 0;
 
-// Sorting
 $orderColumnIndex = intval($_POST['order'][0]['column'] ?? 1);
 $orderDir = ($_POST['order'][0]['dir'] ?? 'desc') === 'asc' ? 'ASC' : 'DESC';
 $columns = ['id', 'date', 'roll_number', 'location', 'item', 'time_in', 'time_out', 'time_out_requested', 'time_out_approved', 'time_out_requested_at'];
 $orderColumn = $columns[$orderColumnIndex] ?? 'date';
 
-// Main Query
 $query = "
   SELECT * FROM attendance 
   $whereSql 
@@ -95,7 +90,6 @@ $data = [];
 
 if ($result) {
   while ($row = mysqli_fetch_assoc($result)) {
-    // Status logic
     $status = 'Active';
     if (!empty($row['time_out'])) {
       $status = 'Completed';

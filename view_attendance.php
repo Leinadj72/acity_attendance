@@ -15,11 +15,7 @@ if (!isset($_SESSION['admin_logged_in'])) {
   <meta charset="UTF-8" />
   <title>Admin - View Attendance</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-
-  <!-- DataTables -->
   <link href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" rel="stylesheet" />
   <link href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.dataTables.min.css" rel="stylesheet" />
   <link href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap5.min.css" rel="stylesheet" />
@@ -105,7 +101,6 @@ if (!isset($_SESSION['admin_logged_in'])) {
     <a href="logout.php" class="btn btn-danger">Logout</a>
   </div>
 
-  <!-- Filters -->
   <div class="row g-3 mb-4 align-items-end">
     <div class="col-md-2">
       <label for="start_date" class="form-label">Start Date</label>
@@ -136,7 +131,6 @@ if (!isset($_SESSION['admin_logged_in'])) {
 
   <div id="toastContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 9999;"></div>
 
-  <!-- Table -->
   <div class="table-responsive mt-4">
     <table id="attendanceTable" class="table table-hover table-striped table-bordered align-middle" style="width:100%">
       <thead>
@@ -161,7 +155,6 @@ if (!isset($_SESSION['admin_logged_in'])) {
     </table>
   </div>
 
-  <!-- JS Libraries -->
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
@@ -171,8 +164,6 @@ if (!isset($_SESSION['admin_logged_in'])) {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.68/pdfmake.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.68/vfs_fonts.js"></script>
-
-  <!-- Your View Script -->
   <script src="./view.js"></script>
 </body>
 

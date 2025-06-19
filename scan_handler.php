@@ -17,7 +17,6 @@ if (!in_array($mode, ['in', 'out'])) {
     exit(json_encode(['status' => 'invalid_mode', 'message' => '❌ Invalid mode selected.']));
 }
 
-// 🔐 Verify with System 2.0
 $action = 'NWtVMUpiQkVDN0pXNTBKNXlrNWdxY0RlNFFFbzJ2a1l3UUVrbzVFVm5GRT0=';
 $endpoint = "https://acityplus.acity.edu.gh/api_student_details_item_request/?token=" . urlencode($token) . "&action=" . urlencode($action);
 
@@ -42,7 +41,6 @@ if (!empty($data['data']['student_roll_number'])) {
 $roll_number = $student['roll_number'];
 $today = date('Y-m-d');
 
-// 📅 Check today's attendance
 $stmt = $conn->prepare("SELECT * FROM attendance WHERE roll_number = ? AND date = ? ORDER BY id DESC");
 $stmt->bind_param("ss", $roll_number, $today);
 $stmt->execute();
@@ -56,14 +54,12 @@ if ($mode === 'in') {
         }
     }
 
-    // 📦 Available items
     $items = [];
     $itemQuery = $conn->query("SELECT DISTINCT item_name FROM items_tags WHERE is_available = 1");
     while ($row = $itemQuery->fetch_assoc()) {
         $items[] = $row['item_name'];
     }
 
-    // 📍 Available locations
     $locations = [];
     $locQuery = $conn->query("SELECT location_name FROM locations");
     while ($row = $locQuery->fetch_assoc()) {
