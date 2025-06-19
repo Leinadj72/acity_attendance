@@ -1,17 +1,17 @@
-const scanner = new Html5Qrcode('reader');
-let scannedRollNumber = '';
+const scanner = new Html5Qrcode("reader");
+let scannedRollNumber = "";
 let scannerTimeout;
 
-if (typeof scanMode === 'undefined') {
+if (typeof scanMode === "undefined") {
   alert(
     "❌ 'scanMode' not defined. Please set scanMode = 'in' or 'out' in your HTML."
   );
-  throw new Error('Missing scanMode.');
+  throw new Error("Missing scanMode.");
 }
 
 const DOM = {
-  status: document.getElementById('status-message'),
-  result: document.getElementById('result'),
+  status: document.getElementById("status-message"),
+  result: document.getElementById("result"),
 };
 
 function updateStatus(message) {
@@ -23,15 +23,15 @@ function showAlert(type, message) {
 }
 
 async function handleQRCodeScan(qrCode) {
-  console.log('QR Code detected:', qrCode);
+  console.log("QR Code detected:", qrCode);
   await scanner.stop();
   scannedRollNumber = qrCode.trim();
-  updateStatus('⌛ Verifying roll number...');
+  updateStatus("⌛ Verifying roll number...");
 
   try {
-    const res = await fetch('scan_handler.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    const res = await fetch("scan_handler.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: `roll_number=${encodeURIComponent(
         scannedRollNumber
       )}&mode=${encodeURIComponent(scanMode)}`,
@@ -39,17 +39,17 @@ async function handleQRCodeScan(qrCode) {
 
     const result = await res.json();
 
-    if (scanMode === 'in') {
-      if (result.status !== 'require_inputs') {
-        showAlert('danger', result.message);
-        updateStatus('📷 Looking for QR code...');
+    if (scanMode === "in") {
+      if (result.status !== "require_inputs") {
+        showAlert("danger", result.message);
+        updateStatus("📷 Looking for QR code...");
         setTimeout(startScanner, 3000);
         return;
       }
 
       DOM.result.innerHTML = `
         <div class="alert alert-success text-center mb-3">
-          👤 <strong>${result.roll_number}</strong> recognized. Proceed with Time In.
+          👤 User QR recognized. Proceed with Time In.
         </div>
         <form id="time-form">
           <label for="item">Select Item:</label>
@@ -71,36 +71,36 @@ async function handleQRCodeScan(qrCode) {
         </form>
       `;
 
-      const itemSelect = document.getElementById('item');
+      const itemSelect = document.getElementById("item");
       result.items.forEach((item) => {
-        const opt = document.createElement('option');
+        const opt = document.createElement("option");
         opt.value = item;
         opt.textContent = item;
         itemSelect.appendChild(opt);
       });
 
-      const locationSelect = document.getElementById('location');
+      const locationSelect = document.getElementById("location");
       result.locations.forEach((loc) => {
-        const opt = document.createElement('option');
+        const opt = document.createElement("option");
         opt.value = loc;
         opt.textContent = loc;
         locationSelect.appendChild(opt);
       });
 
-      const tagInput = document.getElementById('tag');
-      const tagScanner = new Html5Qrcode('tag-reader');
+      const tagInput = document.getElementById("tag");
+      const tagScanner = new Html5Qrcode("tag-reader");
 
       tagScanner.start(
-        { facingMode: 'environment' },
+        { facingMode: "environment" },
         { fps: 10, qrbox: 200 },
         async (code) => {
           const tag = code.trim();
           await tagScanner.stop();
 
           try {
-            const verifyRes = await fetch('verify_tag.php', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            const verifyRes = await fetch("verify_tag.php", {
+              method: "POST",
+              headers: { "Content-Type": "application/x-www-form-urlencoded" },
               body: `tag=${encodeURIComponent(tag)}&item=${encodeURIComponent(
                 itemSelect.value
               )}`,
@@ -110,63 +110,63 @@ async function handleQRCodeScan(qrCode) {
             if (verifyData.valid) {
               tagInput.value = tag;
             } else {
-              alert('❌ Invalid tag for selected item.');
-              tagInput.value = '';
+              alert("❌ Invalid tag for selected item.");
+              tagInput.value = "";
               tagScanner.start();
             }
           } catch (err) {
-            alert('❌ Error verifying tag.');
+            alert("❌ Error verifying tag.");
           }
         }
       );
 
       document
-        .getElementById('time-form')
-        .addEventListener('submit', async (e) => {
+        .getElementById("time-form")
+        .addEventListener("submit", async (e) => {
           e.preventDefault();
           const formData = new URLSearchParams({
-            roll_number: scannedRollNumber,
+            token: scannedRollNumber,
             item: itemSelect.value,
-            tag: tagInput.value.trim(),
+            tag_number: tagInput.value.trim(),
             location: locationSelect.value,
           });
 
           try {
-            const submitRes = await fetch('time_in_handler.php', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            const submitRes = await fetch("time_in_handler.php", {
+              method: "POST",
+              headers: { "Content-Type": "application/x-www-form-urlencoded" },
               body: formData.toString(),
             });
 
             const data = await submitRes.json();
             showAlert(
-              data.status === 'success' ? 'success' : 'danger',
+              data.status === "success" ? "success" : "danger",
               data.message
             );
-            if (data.status === 'success' && data.redirect) {
+            if (data.status === "success" && data.redirect) {
               setTimeout(() => {
                 window.location.href = data.redirect;
               }, 2000);
               return;
             }
           } catch {
-            showAlert('danger', '❌ Network error.');
+            showAlert("danger", "❌ Network error.");
           }
 
-          updateStatus('📷 Looking for QR code...');
+          updateStatus("📷 Looking for QR code...");
           setTimeout(startScanner, 5000);
         });
-    } else if (scanMode === 'out') {
-      if (result.status !== 'ready_for_timeout') {
-        showAlert('danger', result.message);
-        updateStatus('📷 Looking for QR code...');
+    } else if (scanMode === "out") {
+      if (result.status !== "ready_for_timeout") {
+        showAlert("danger", result.message);
+        updateStatus("📷 Looking for QR code...");
         setTimeout(startScanner, 3000);
         return;
       }
 
       DOM.result.innerHTML = `
         <div class="alert alert-success text-center mb-3">
-          👤 <strong>${result.roll_number}</strong> recognized. Scan or enter tag to Time Out.
+          👤 User QR recognized. Scan or enter tag to Time Out.
         </div>
         <form id="timeout-form">
           <label for="tag">Enter or Scan Tag:</label>
@@ -178,20 +178,20 @@ async function handleQRCodeScan(qrCode) {
         </form>
       `;
 
-      const tagInput = document.getElementById('tag');
-      const tagScanner = new Html5Qrcode('tag-reader');
+      const tagInput = document.getElementById("tag");
+      const tagScanner = new Html5Qrcode("tag-reader");
 
       tagScanner.start(
-        { facingMode: 'environment' },
+        { facingMode: "environment" },
         { fps: 10, qrbox: 200 },
         async (code) => {
           const tag = code.trim();
           await tagScanner.stop();
 
           try {
-            const verifyRes = await fetch('verify_tag.php', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            const verifyRes = await fetch("verify_tag.php", {
+              method: "POST",
+              headers: { "Content-Type": "application/x-www-form-urlencoded" },
               body: `tag=${encodeURIComponent(
                 tag
               )}&roll_number=${encodeURIComponent(result.roll_number)}`,
@@ -201,25 +201,25 @@ async function handleQRCodeScan(qrCode) {
             if (verifyData.valid) {
               tagInput.value = tag;
             } else {
-              alert('❌ Invalid tag or not linked to you.');
-              tagInput.value = '';
+              alert("❌ Invalid tag or not linked to you.");
+              tagInput.value = "";
               tagScanner.start();
             }
           } catch {
-            alert('❌ Error verifying tag.');
+            alert("❌ Error verifying tag.");
           }
         }
       );
 
       document
-        .getElementById('timeout-form')
-        .addEventListener('submit', async (e) => {
+        .getElementById("timeout-form")
+        .addEventListener("submit", async (e) => {
           e.preventDefault();
 
           try {
-            const res = await fetch('time_out_handler.php', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            const res = await fetch("time_out_handler.php", {
+              method: "POST",
+              headers: { "Content-Type": "application/x-www-form-urlencoded" },
               body: `roll_number=${encodeURIComponent(
                 result.roll_number
               )}&tag=${encodeURIComponent(tagInput.value.trim())}`,
@@ -227,44 +227,44 @@ async function handleQRCodeScan(qrCode) {
 
             const data = await res.json();
             showAlert(
-              data.status === 'success' ? 'success' : 'danger',
+              data.status === "success" ? "success" : "danger",
               data.message
             );
-            if (data.status === 'success' && data.redirect) {
+            if (data.status === "success" && data.redirect) {
               setTimeout(() => {
                 window.location.href = data.redirect;
               }, 2000);
               return;
             }
           } catch {
-            showAlert('danger', '❌ Network error.');
+            showAlert("danger", "❌ Network error.");
           }
 
-          updateStatus('📷 Looking for QR code...');
+          updateStatus("📷 Looking for QR code...");
           setTimeout(startScanner, 5000);
         });
     }
   } catch (err) {
-    console.error('Fetch error:', err);
-    showAlert('danger', '❌ Server error.');
-    updateStatus('📷 Looking for QR code...');
+    console.error("Fetch error:", err);
+    showAlert("danger", "❌ Server error.");
+    updateStatus("📷 Looking for QR code...");
     setTimeout(startScanner, 3000);
   }
 }
 
 function startScanner() {
   updateStatus(
-    `📷 Looking for QR code for Time ${scanMode === 'out' ? 'Out' : 'In'}...`
+    `📷 Looking for QR code for Time ${scanMode === "out" ? "Out" : "In"}...`
   );
   scanner.start(
-    { facingMode: 'environment' },
+    { facingMode: "environment" },
     { fps: 10, qrbox: 250 },
     (qrCodeMessage) => {
       clearTimeout(scannerTimeout);
       handleQRCodeScan(qrCodeMessage);
     },
     (error) => {
-      console.warn('QR scan error:', error);
+      console.warn("QR scan error:", error);
     }
   );
 }

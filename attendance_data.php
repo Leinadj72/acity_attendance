@@ -9,7 +9,8 @@ if (!isset($_SESSION['admin_logged_in'])) {
   exit;
 }
 
-function escape($conn, $str) {
+function escape($conn, $str)
+{
   return mysqli_real_escape_string($conn, $str);
 }
 
@@ -34,6 +35,7 @@ if (isset($_POST['action']) && $_POST['action'] === 'get' && isset($_POST['id'])
   exit;
 }
 
+// Filters
 $where = [];
 
 if (!empty($start_date)) {
@@ -50,21 +52,23 @@ if (!empty($search_roll_location)) {
 }
 if (!empty($searchValue)) {
   $searchValEsc = escape($conn, $searchValue);
-  $where[] = "(roll_number LIKE '%$searchValEsc%' OR location LIKE '%$searchValEsc%' OR item LIKE '%$searchValEsc%')";
+  $where[] = "(roll_number LIKE '%$searchValEsc%' OR location LIKE '%$searchValEsc%' OR item LIKE '%$searchValEsc%' OR tag_number LIKE '%$searchValEsc%')";
 }
 
 $whereSql = count($where) ? ' WHERE ' . implode(' AND ', $where) : '';
 
+// Record counts
 $totalRecordsResult = mysqli_query($conn, "SELECT COUNT(*) as count FROM attendance");
 $totalRecords = $totalRecordsResult ? mysqli_fetch_assoc($totalRecordsResult)['count'] : 0;
 
 $totalFilteredResult = mysqli_query($conn, "SELECT COUNT(*) as count FROM attendance $whereSql");
 $totalFiltered = $totalFilteredResult ? mysqli_fetch_assoc($totalFilteredResult)['count'] : 0;
 
+// Sorting
 $orderColumnIndex = intval($_POST['order'][0]['column'] ?? 1);
 $orderDir = ($_POST['order'][0]['dir'] ?? 'desc') === 'asc' ? 'ASC' : 'DESC';
 
-$columns = ['id', 'date', 'roll_number', 'location', 'item', 'time_in', 'time_out', 'time_out_requested', 'time_out_approved'];
+$columns = ['id', 'date', 'roll_number', 'location', 'item', 'time_in', 'time_out', 'time_out_requested', 'time_out_approved', 'time_out_requested_at'];
 $orderColumn = $columns[$orderColumnIndex] ?? 'date';
 
 $query = "SELECT * FROM attendance $whereSql ORDER BY time_out IS NULL DESC, $orderColumn $orderDir LIMIT $start, $length";
@@ -73,19 +77,21 @@ $result = mysqli_query($conn, $query);
 $data = [];
 if ($result) {
   while ($row = mysqli_fetch_assoc($result)) {
-    if ($row['time_out_requested'] && $row['time_out_approved']) {
+    // Status logic
+    if (!empty($row['time_out'])) {
+      $status = 'Completed';
+    } elseif ($row['time_out_requested'] && $row['time_out_approved']) {
       $status = 'Approved';
     } elseif ($row['time_out_requested'] && $row['time_out_approved'] === '0') {
-      $status = 'Rejected';
-    } elseif ($row['time_out_requested']) {
       $status = 'Pending';
     } else {
       $status = 'Not Requested';
     }
 
     $row['status'] = $status;
-    $row['time_in'] = $row['time_in'] ? date('Y-m-d H:i:s', strtotime($row['time_in'])) : '';
-    $row['time_out'] = $row['time_out'] ? date('Y-m-d H:i:s', strtotime($row['time_out'])) : '';
+    $row['time_in'] = $row['time_in'] ? date('H:i:s', strtotime($row['time_in'])) : '';
+    $row['time_out'] = $row['time_out'] ? date('y-m-d H:i:s', strtotime($row['time_out'])) : '';
+    $row['time_out_requested_at'] = $row['time_out_requested_at'] ? date('y-m-d H:i:s', strtotime($row['time_out_requested_at'])) : '';
     $row['created_at'] = $row['created_at'] ? date('Y-m-d H:i:s', strtotime($row['created_at'])) : '';
 
     $data[] = $row;
@@ -110,4 +116,3 @@ $response = [
 ];
 
 echo json_encode($response);
-?>

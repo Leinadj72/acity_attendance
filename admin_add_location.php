@@ -8,12 +8,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   if ($location !== '') {
     if ($edit_id) {
-      $stmt = $conn->prepare("UPDATE locations SET name = ? WHERE id = ?");
+      $stmt = $conn->prepare("UPDATE locations SET location_name = ? WHERE id = ?");
       $stmt->bind_param("si", $location, $edit_id);
       $stmt->execute();
       $msg = "✅ Location updated.";
     } else {
-      $stmt = $conn->prepare("INSERT INTO locations (name) VALUES (?)");
+      $stmt = $conn->prepare("INSERT INTO locations (location_name) VALUES (?)");
       $stmt->bind_param("s", $location);
       $stmt->execute();
       $msg = "✅ Location added.";
@@ -37,16 +37,18 @@ if (isset($_GET['edit'])) {
   $edit_location = $result->fetch_assoc();
 }
 
-$locations = $conn->query("SELECT * FROM locations ORDER BY name ASC");
+$locations = $conn->query("SELECT * FROM locations ORDER BY location_name ASC");
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>Manage Locations</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
 </head>
+
 <body class="container py-5">
   <h1 class="mb-4">Manage Locations</h1>
 
@@ -55,10 +57,10 @@ $locations = $conn->query("SELECT * FROM locations ORDER BY name ASC");
   <?php endif; ?>
 
   <form method="POST" class="mb-4">
-    <input type="hidden" name="edit_id" value="<?= $edit_location['id'] ?? '' ?>">
+    <input type="hidden" location_name="edit_id" value="<?= $edit_location['id'] ?? '' ?>">
     <div class="mb-3">
       <label class="form-label"><?= $edit_location ? 'Edit Location' : 'Add New Location' ?></label>
-      <input type="text" name="location" class="form-control" value="<?= $edit_location['name'] ?? '' ?>" required>
+      <input type="text" location_name="location" class="form-control" value="<?= $edit_location['location_name'] ?? '' ?>" required>
     </div>
     <button type="submit" class="btn btn-<?= $edit_location ? 'warning' : 'primary' ?>">
       <?= $edit_location ? 'Update' : 'Add' ?> Location
@@ -71,12 +73,15 @@ $locations = $conn->query("SELECT * FROM locations ORDER BY name ASC");
   <h2>Location List</h2>
   <table class="table table-bordered">
     <thead>
-      <tr><th>Name</th><th>Actions</th></tr>
+      <tr>
+        <th>Name</th>
+        <th>Actions</th>
+      </tr>
     </thead>
     <tbody>
       <?php while ($loc = $locations->fetch_assoc()): ?>
         <tr>
-          <td><?= htmlspecialchars($loc['name']) ?></td>
+          <td><?= htmlspecialchars($loc['location_name']) ?></td>
           <td>
             <a href="?edit=<?= $loc['id'] ?>" class="btn btn-sm btn-warning">Edit</a>
             <a href="?delete=<?= $loc['id'] ?>" onclick="return confirm('Delete this location?')" class="btn btn-sm btn-danger">Delete</a>
@@ -86,4 +91,5 @@ $locations = $conn->query("SELECT * FROM locations ORDER BY name ASC");
     </tbody>
   </table>
 </body>
+
 </html>

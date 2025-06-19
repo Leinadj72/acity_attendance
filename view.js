@@ -11,14 +11,25 @@ $(document).ready(function () {
     $("#toastContainer").append(toast);
     const bsToast = new bootstrap.Toast(toast[0], { delay: 3000 });
     bsToast.show();
-    toast.on("hidden.bs.toast", function () {
-      toast.remove();
-    });
+    toast.on("hidden.bs.toast", () => toast.remove());
   }
 
   const table = $("#records").DataTable({
+    dom: "Bfrtip",
+    buttons: [
+      { extend: "excelHtml5", title: "Attendance Records" },
+      { extend: "csvHtml5", title: "Attendance Records" },
+      {
+        extend: "pdfHtml5",
+        title: "Attendance Records",
+        orientation: "landscape",
+        pageSize: "A4",
+      },
+      { extend: "print", title: "Attendance Records" },
+    ],
     ajax: {
       url: "fetch_attendance.php",
+      type: "POST",
       data: function (d) {
         d.start_date = $("#start_date").val();
         d.end_date = $("#end_date").val();
@@ -32,21 +43,63 @@ $(document).ready(function () {
       { data: "index" },
       { data: "date" },
       { data: "roll_number" },
-      { data: "location" },
+      { data: "name" },
+      { data: "email" },
+      { data: "phone" },
       { data: "item" },
       { data: "tag_number" },
-      { data: "time_in" },
-      { data: "time_out" },
+      { data: "location" },
+      {
+        data: "time_in",
+        render: function (data) {
+          return data || "--";
+        },
+      },
+      {
+        data: "time_out",
+        render: function (data) {
+          return data || "--";
+        },
+      },
+      {
+        data: "time_out_requested_at",
+        render: function (data) {
+          return data || "--";
+        },
+      },
+      {
+        data: "status",
+        render: function (status) {
+          let badgeClass = "secondary";
+          switch (status) {
+            case "Approved":
+              badgeClass = "success";
+              break;
+            case "Rejected":
+              badgeClass = "danger";
+              break;
+            case "Pending":
+              badgeClass = "warning";
+              break;
+            case "Active":
+              badgeClass = "info";
+              break;
+            case "Completed":
+              badgeClass = "primary";
+              break;
+          }
+          return `<span class="badge bg-${badgeClass}">${status}</span>`;
+        },
+      },
       {
         data: null,
-        render: function (data, type, row) {
-          let buttons = "";
-          buttons += `<button class="btn btn-primary btn-sm edit-btn" data-id="${row.id}">Edit</button> `;
-
+        orderable: false,
+        render: function (row) {
+          let buttons = `<button class="btn btn-sm btn-outline-primary edit-btn" data-id="${row.id}">Edit</button> `;
           if (row.time_out_requested == 1 && row.time_out_approved == 0) {
             buttons += `
-              <button class="btn btn-success btn-sm approve-btn" data-id="${row.id}">Approve</button>
-              <button class="btn btn-danger btn-sm reject-btn" data-id="${row.id}">Reject</button>
+              <button class="btn btn-sm btn-outline-success approve-btn" data-id="${row.id}">Approve</button>
+              <button class="btn btn-sm btn-outline-danger reject-btn" data-id="${row.id}">Reject</button>
             `;
           } else {
             buttons += `<span class="text-muted">No Action</span>`;
@@ -57,14 +110,11 @@ $(document).ready(function () {
     ],
   });
 
-  table.on("preXhr.dt", () => $("#records").addClass("opacity-50"));
-  table.on("xhr.dt", () => $("#records").removeClass("opacity-50"));
+  // Filter button
+  $("#filterBtn").on("click", () => table.ajax.reload());
 
-  $("#filterBtn").click(function () {
-    table.ajax.reload();
-  });
-
-  $("#resetBtn").click(function () {
+  // Reset filters
+  $("#resetBtn").on("click", function () {
     $("#start_date, #end_date, #search_roll_location, #search_tag_number").val(
       ""
     );
@@ -72,6 +122,7 @@ $(document).ready(function () {
     table.ajax.reload();
   });
 
+  // Approve button
   $("#records").on("click", ".approve-btn", function () {
     const button = $(this);
     const id = button.data("id");
@@ -81,17 +132,20 @@ $(document).ready(function () {
       "approve_attendance.php",
       { id },
       function (response) {
-        showToast(response.message || "Approved!", "success");
+        showToast(response.message || "Time Out Approved!", "success");
         table.ajax.reload();
       },
       "json"
     )
-      .fail(() => showToast("Failed to approve. Try again.", "danger"))
+      .fail(() => {
+        showToast("Failed to approve. Try again.", "danger");
+      })
       .always(() => {
         button.prop("disabled", false).text("Approve");
       });
   });
 
+  // Reject button
   $("#records").on("click", ".reject-btn", function () {
     const button = $(this);
     const id = button.data("id");
@@ -101,17 +155,20 @@ $(document).ready(function () {
       "reject_attendance.php",
       { id },
       function (response) {
-        showToast(response.message || "Rejected!", "success");
+        showToast(response.message || "Time Out Rejected!", "success");
         table.ajax.reload();
       },
       "json"
     )
-      .fail(() => showToast("Failed to reject. Try again.", "danger"))
+      .fail(() => {
+        showToast("Failed to reject. Try again.", "danger");
+      })
       .always(() => {
         button.prop("disabled", false).text("Reject");
       });
   });
 
+  // Edit modal trigger
   $("#records").on("click", ".edit-btn", function () {
     const rowData = table.row($(this).closest("tr")).data();
     $("#edit_id").val(rowData.id);
@@ -119,84 +176,29 @@ $(document).ready(function () {
     $("#edit_roll_number").val(rowData.roll_number);
     $("#edit_location").val(rowData.location);
     $("#edit_item").val(rowData.item);
-    $("#edit_time_in").val(rowData.time_in);
-    $("#edit_time_out").val(rowData.time_out);
+    $("#edit_time_in").val(rowData.time_in || "");
+    $("#edit_time_out").val(rowData.time_out || "");
     $("#editModal").modal("show");
   });
 
+  // Edit form submit
   $("#editForm").submit(function (e) {
     e.preventDefault();
     const formData = $(this).serialize();
-
     $.post(
       "edit_attendance.php",
       formData,
       function (response) {
-        showToast(response.message || "Updated successfully!", "success");
+        showToast(
+          response.message || "Record updated successfully!",
+          "success"
+        );
         $("#editModal").modal("hide");
         table.ajax.reload();
       },
       "json"
-    ).fail(() => showToast("Failed to update.", "danger"));
-  });
-});
-
-$(document).ready(function () {
-  const table = $("#records").DataTable({
-    dom: "Bfrtip",
-    buttons: [
-      {
-        extend: "excelHtml5",
-        title: "Attendance Records",
-      },
-      {
-        extend: "csvHtml5",
-        title: "Attendance Records",
-      },
-      {
-        extend: "pdfHtml5",
-        title: "Attendance Records",
-        orientation: "landscape",
-        pageSize: "A4",
-      },
-      {
-        extend: "print",
-        title: "Attendance Records",
-      },
-    ],
-    ajax: {
-      url: "fetch_attendance.php", // adjust to your backend source
-      type: "POST",
-      data: function (d) {
-        d.start_date = $("#start_date").val();
-        d.end_date = $("#end_date").val();
-        d.search_roll_location = $("#search_roll_location").val();
-        d.search_tag_number = $("#search_tag_number").val();
-        d.pending_only = $("#pending_only").is(":checked") ? 1 : 0;
-      },
-    },
-    columns: [
-      { data: "id" },
-      { data: "date" },
-      { data: "roll_number" },
-      { data: "location" },
-      { data: "item" },
-      { data: "tag_number" },
-      { data: "time_in" },
-      { data: "time_out" },
-      { data: "actions" },
-    ],
-  });
-
-  $("#filterBtn").on("click", function () {
-    table.ajax.reload();
-  });
-
-  $("#resetBtn").on("click", function () {
-    $("#start_date, #end_date, #search_roll_location, #search_tag_number").val(
-      ""
-    );
-    $("#pending_only").prop("checked", false);
-    table.ajax.reload();
+    ).fail(() => {
+      showToast("Failed to update record.", "danger");
+    });
   });
 });

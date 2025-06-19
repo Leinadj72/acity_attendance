@@ -2,6 +2,7 @@
 <?php date_default_timezone_set("Africa/Accra"); ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>Time In | QR Attendance Scanner</title>
@@ -11,29 +12,35 @@
     body {
       background-color: #f8f9fa;
     }
+
     #reader {
       width: 100%;
       max-width: 400px;
       margin: 0 auto;
     }
+
     #status-message {
       font-weight: bold;
       font-size: 1.1rem;
       text-align: center;
     }
+
     .alert {
       font-size: 0.95rem;
     }
+
     .spinner-border {
       width: 2rem;
       height: 2rem;
     }
+
     #form-area {
       display: none;
       margin-top: 2rem;
     }
   </style>
 </head>
+
 <body class="container py-5">
   <h2 class="text-center mb-4">📸 Time In Scanner</h2>
 
@@ -51,7 +58,7 @@
   <div id="form-area" class="mt-4">
     <form id="timein-form" class="border p-3 rounded bg-white shadow-sm">
       <input type="hidden" id="roll_number" name="roll_number">
-      
+
       <div class="mb-3">
         <label for="item" class="form-label">Select Item</label>
         <select class="form-select" id="item" name="item" required></select>
@@ -77,4 +84,5 @@
   </script>
   <script src="scan.js"></script>
 </body>
+
 </html>
