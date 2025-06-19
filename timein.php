@@ -61,23 +61,28 @@
 
       <div class="mb-3">
         <label for="item" class="form-label">Select Item</label>
-        <select class="form-select" id="item" name="item" required></select>
+        <select class="form-select" id="item" name="item" required>
+          <option value="">-- Select an Item --</option>
+        </select>
       </div>
 
       <div class="mb-3">
-        <label for="tag" class="form-label">Enter/Scan Tag Number</label>
+        <label for="tag" class="form-label">Enter or Scan Tag Number</label>
         <input type="text" class="form-control" id="tag" name="tag" required>
       </div>
 
       <div class="mb-3">
         <label for="location" class="form-label">Select Location</label>
-        <select class="form-select" id="location" name="location" required></select>
+        <select class="form-select" id="location" name="location" required>
+          <option value="">-- Select Location --</option>
+        </select>
       </div>
 
       <button type="submit" class="btn btn-primary w-100">✅ Confirm Time In</button>
     </form>
   </div>
 
+  <!-- QR Scanner -->
   <script src="https://unpkg.com/html5-qrcode@2.3.7/html5-qrcode.min.js"></script>
   <script>
     const scanMode = 'in';

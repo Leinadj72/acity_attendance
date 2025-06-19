@@ -25,7 +25,7 @@ if (!in_array($mode, ['in', 'out'])) {
 
 $today = date('Y-m-d');
 
-// Get today's records for the roll number
+// ✅ Step 1: Get today's records for this roll number
 $stmt = $conn->prepare("SELECT * FROM attendance WHERE roll_number = ? AND date = ? ORDER BY id DESC");
 $stmt->bind_param("ss", $roll_number, $today);
 $stmt->execute();
@@ -33,9 +33,13 @@ $result = $stmt->get_result();
 $attRecords = $result->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
 
+// 🟢 TIME IN FLOW
 if ($mode === 'in') {
     foreach ($attRecords as $record) {
-        if (empty($record['time_out']) && empty($record['time_out_requested'])) {
+        if (
+            empty($record['time_out']) &&
+            (!isset($record['time_out_requested']) || $record['time_out_requested'] == 0)
+        ) {
             exit(json_encode([
                 'status' => 'already_timed_in',
                 'message' => '⚠️ You have already timed in and not timed out.'
@@ -43,19 +47,15 @@ if ($mode === 'in') {
         }
     }
 
-    // Get available items
+    // ✅ Allow Time In – Return available items and dummy locations (or static list)
     $items = [];
     $itemQuery = $conn->query("SELECT DISTINCT item_name FROM items_tags WHERE is_available = 1");
     while ($row = $itemQuery->fetch_assoc()) {
         $items[] = $row['item_name'];
     }
 
-    // Get available locations
-    $locations = [];
-    $locQuery = $conn->query("SELECT DISTINCT location_name FROM locations ORDER BY location_name ASC");
-    while ($row = $locQuery->fetch_assoc()) {
-        $locations[] = $row['location_name'];
-    }
+    // If you don’t have a locations table, use static values instead
+    $locations = ['Main Lab', 'Library', 'Workshop', 'Studio'];
 
     echo json_encode([
         'status' => 'require_inputs',
@@ -67,27 +67,32 @@ if ($mode === 'in') {
     exit;
 }
 
+// 🔴 TIME OUT FLOW
 if ($mode === 'out') {
     foreach ($attRecords as $record) {
-        if (
-            empty($record['time_out']) &&
-            (empty($record['time_out_requested']) || $record['time_out_requested'] == 0) &&
-            $record['time_out_approved'] == 0
-        ) {
-            echo json_encode([
+        $requested = (int)($record['time_out_requested'] ?? 0);
+        $approved = (int)($record['time_out_approved'] ?? 0);
+        $hasTimeOut = !empty($record['time_out']);
+
+        if (!$hasTimeOut && $requested === 0 && $approved === 0) {
+            exit(json_encode([
                 'status' => 'ready_for_timeout',
                 'message' => '✅ Proceed to enter your tag number for Time Out.',
                 'roll_number' => $roll_number,
                 'tag_number' => $record['tag_number'],
                 'record_id' => $record['id']
-            ]);
-            exit;
+            ]));
         }
     }
 
-    echo json_encode([
+    exit(json_encode([
         'status' => 'not_timed_in',
         'message' => '⚠️ No active Time In record found for Time Out.'
-    ]);
-    exit;
+    ]));
 }
+
+// 🔚 Fallback (should never reach here)
+exit(json_encode([
+    'status' => 'error',
+    'message' => '❌ Unknown error occurred.'
+]));

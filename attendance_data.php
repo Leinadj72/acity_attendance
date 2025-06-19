@@ -14,7 +14,7 @@ function escape($conn, $str)
   return mysqli_real_escape_string($conn, $str);
 }
 
-$draw = $_POST['draw'] ?? 1;
+$draw = intval($_POST['draw'] ?? 1);
 $start = intval($_POST['start'] ?? 0);
 $length = intval($_POST['length'] ?? 10);
 $searchValue = $_POST['search']['value'] ?? '';
@@ -22,7 +22,10 @@ $searchValue = $_POST['search']['value'] ?? '';
 $start_date = $_POST['start_date'] ?? '';
 $end_date = $_POST['end_date'] ?? '';
 $search_roll_location = $_POST['search_roll_location'] ?? '';
+$tag_number = $_POST['tag_number'] ?? '';
+$pending_only = isset($_POST['pending_only']) && $_POST['pending_only'] === "1";
 
+// Handle single record fetch
 if (isset($_POST['action']) && $_POST['action'] === 'get' && isset($_POST['id'])) {
   $id = intval($_POST['id']);
   $res = mysqli_query($conn, "SELECT * FROM attendance WHERE id = $id LIMIT 1");
@@ -47,30 +50,37 @@ if (!empty($end_date)) {
   $where[] = "date <= '$end_date_esc'";
 }
 if (!empty($search_roll_location)) {
-  $search_rl_esc = escape($conn, $search_roll_location);
-  $where[] = "(roll_number LIKE '%$search_rl_esc%' OR location LIKE '%$search_rl_esc%')";
+  $s = escape($conn, $search_roll_location);
+  $where[] = "(roll_number LIKE '%$s%' OR location LIKE '%$s%')";
+}
+if (!empty($tag_number)) {
+  $t = escape($conn, $tag_number);
+  $where[] = "tag_number LIKE '%$t%'";
 }
 if (!empty($searchValue)) {
-  $searchValEsc = escape($conn, $searchValue);
-  $where[] = "(roll_number LIKE '%$searchValEsc%' OR location LIKE '%$searchValEsc%' OR item LIKE '%$searchValEsc%' OR tag_number LIKE '%$searchValEsc%')";
+  $s = escape($conn, $searchValue);
+  $where[] = "(roll_number LIKE '%$s%' OR location LIKE '%$s%' OR item LIKE '%$s%' OR tag_number LIKE '%$s%')";
+}
+if ($pending_only) {
+  $where[] = "(time_out IS NULL AND (time_out_requested IS NULL OR time_out_requested = 0))";
 }
 
-$whereSql = count($where) ? ' WHERE ' . implode(' AND ', $where) : '';
+$whereSql = count($where) ? 'WHERE ' . implode(' AND ', $where) : '';
 
-// Record counts
-$totalRecordsResult = mysqli_query($conn, "SELECT COUNT(*) as count FROM attendance");
-$totalRecords = $totalRecordsResult ? mysqli_fetch_assoc($totalRecordsResult)['count'] : 0;
+// Count total records
+$totalRecordsQuery = mysqli_query($conn, "SELECT COUNT(*) as count FROM attendance");
+$totalRecords = $totalRecordsQuery ? mysqli_fetch_assoc($totalRecordsQuery)['count'] : 0;
 
-$totalFilteredResult = mysqli_query($conn, "SELECT COUNT(*) as count FROM attendance $whereSql");
-$totalFiltered = $totalFilteredResult ? mysqli_fetch_assoc($totalFilteredResult)['count'] : 0;
+$totalFilteredQuery = mysqli_query($conn, "SELECT COUNT(*) as count FROM attendance $whereSql");
+$totalFiltered = $totalFilteredQuery ? mysqli_fetch_assoc($totalFilteredQuery)['count'] : 0;
 
 // Sorting
 $orderColumnIndex = intval($_POST['order'][0]['column'] ?? 1);
 $orderDir = ($_POST['order'][0]['dir'] ?? 'desc') === 'asc' ? 'ASC' : 'DESC';
-
 $columns = ['id', 'date', 'roll_number', 'location', 'item', 'time_in', 'time_out', 'time_out_requested', 'time_out_approved', 'time_out_requested_at'];
 $orderColumn = $columns[$orderColumnIndex] ?? 'date';
 
+// Main Query
 $query = "
   SELECT * FROM attendance 
   $whereSql 
@@ -79,47 +89,55 @@ $query = "
     $orderColumn $orderDir 
   LIMIT $start, $length
 ";
-$result = mysqli_query($conn, $query);
 
+$result = mysqli_query($conn, $query);
 $data = [];
+
 if ($result) {
   while ($row = mysqli_fetch_assoc($result)) {
     // Status logic
+    $status = 'Active';
     if (!empty($row['time_out'])) {
       $status = 'Completed';
-    } elseif ($row['time_out_requested'] && $row['time_out_approved']) {
-      $status = 'Approved';
-    } elseif ($row['time_out_requested'] && $row['time_out_approved'] === '0') {
+    } elseif ($row['time_out_requested'] && !$row['time_out_approved']) {
       $status = 'Pending';
-    } else {
-      $status = 'Not Requested';
+    } elseif ($row['time_out_requested'] && $row['time_out_approved'] == 0) {
+      $status = 'Rejected';
     }
 
-    $row['status'] = $status;
-    $row['time_in'] = $row['time_in'] ? date('H:i:s', strtotime($row['time_in'])) : '';
-    $row['time_out'] = $row['time_out'] ? date('y-m-d H:i:s', strtotime($row['time_out'])) : '';
-    $row['time_out_requested_at'] = $row['time_out_requested_at'] ? date('y-m-d H:i:s', strtotime($row['time_out_requested_at'])) : '';
-    $row['created_at'] = $row['created_at'] ? date('Y-m-d H:i:s', strtotime($row['created_at'])) : '';
-
-    $data[] = $row;
+    $data[] = [
+      'id' => $row['id'],
+      'date' => $row['date'],
+      'roll_number' => $row['roll_number'],
+      'name' => $row['name'] ?? '--',
+      'email' => $row['email'] ?? '--',
+      'phone' => $row['phone'] ?? '--',
+      'item' => $row['item'],
+      'tag_number' => $row['tag_number'],
+      'location' => $row['location'],
+      'time_in' => $row['time_in'] ? date('H:i:s', strtotime($row['time_in'])) : '',
+      'time_out' => $row['time_out'] ? date('Y-m-d H:i:s', strtotime($row['time_out'])) : '',
+      'time_out_requested_at' => $row['time_out_requested_at'] ? date('Y-m-d H:i:s', strtotime($row['time_out_requested_at'])) : '',
+      'status' => $status,
+      'time_out_requested' => $row['time_out_requested'],
+      'time_out_approved' => $row['time_out_approved']
+    ];
   }
 } else {
   http_response_code(500);
   echo json_encode([
-    'draw' => intval($draw),
+    'draw' => $draw,
     'recordsTotal' => $totalRecords,
     'recordsFiltered' => $totalFiltered,
     'data' => [],
-    'error' => 'Failed to fetch attendance data.'
+    'error' => 'Query failed.'
   ]);
   exit;
 }
 
-$response = [
-  'draw' => intval($draw),
+echo json_encode([
+  'draw' => $draw,
   'recordsTotal' => $totalRecords,
   'recordsFiltered' => $totalFiltered,
   'data' => $data
-];
-
-echo json_encode($response);
+]);

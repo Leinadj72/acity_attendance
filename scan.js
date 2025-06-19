@@ -121,36 +121,38 @@ async function handleQRCodeScan(qrCode) {
       );
 
       document
-        .getElementById("time-form")
+        .getElementById("timeout-form")
         .addEventListener("submit", async (e) => {
           e.preventDefault();
-          const formData = new URLSearchParams({
-            token: scannedRollNumber,
-            item: itemSelect.value,
-            tag_number: tagInput.value.trim(),
-            location: locationSelect.value,
-          });
+
+          const tag = tagInput.value.trim();
+          if (!tag) {
+            showAlert("danger", "❌ Please enter a valid tag.");
+            return;
+          }
 
           try {
-            const submitRes = await fetch("time_in_handler.php", {
+            const res = await fetch("time_out_handler.php", {
               method: "POST",
               headers: { "Content-Type": "application/x-www-form-urlencoded" },
-              body: formData.toString(),
+              body: `tag=${encodeURIComponent(tag)}`,
             });
 
-            const data = await submitRes.json();
+            const data = await res.json();
             showAlert(
               data.status === "success" ? "success" : "danger",
               data.message
             );
+
             if (data.status === "success" && data.redirect) {
               setTimeout(() => {
                 window.location.href = data.redirect;
               }, 2000);
               return;
             }
-          } catch {
-            showAlert("danger", "❌ Network error.");
+          } catch (error) {
+            console.error("Time Out error:", error);
+            showAlert("danger", "❌ Network or server error.");
           }
 
           updateStatus("📷 Looking for QR code...");

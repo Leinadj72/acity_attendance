@@ -36,7 +36,7 @@ $stmt = $conn->prepare("
     FROM attendance 
     WHERE tag_number = ? 
       AND time_out IS NULL 
-      AND (time_out_requested IS NULL OR time_out_requested = 0)
+      AND IFNULL(time_out_requested, 0) = 0
       AND time_out_approved = 0
     ORDER BY id DESC 
     LIMIT 1
@@ -56,7 +56,7 @@ if (!$attendance) {
 
 // 🕒 Step 3: Update time_out_requested and time_out_requested_at
 $attendance_id = $attendance['id'];
-$current_time = date('Y-m-d H:i:s'); // full timestamp
+$current_time = date('Y-m-d H:i:s');
 
 $update = $conn->prepare("UPDATE attendance SET time_out_requested = 1, time_out_requested_at = ? WHERE id = ?");
 $update->bind_param("si", $current_time, $attendance_id);

@@ -51,21 +51,15 @@ $(document).ready(function () {
       { data: "location" },
       {
         data: "time_in",
-        render: function (data) {
-          return data || "--";
-        },
+        render: (data) => data || "--",
       },
       {
         data: "time_out",
-        render: function (data) {
-          return data || "--";
-        },
+        render: (data) => data || "--",
       },
       {
         data: "time_out_requested_at",
-        render: function (data) {
-          return data || "--";
-        },
+        render: (data) => data || "--",
       },
       {
         data: "status",
@@ -110,7 +104,7 @@ $(document).ready(function () {
     ],
   });
 
-  // Filter button
+  // Filter
   $("#filterBtn").on("click", () => table.ajax.reload());
 
   // Reset filters
@@ -122,54 +116,50 @@ $(document).ready(function () {
     table.ajax.reload();
   });
 
-  // Approve button
-  $("#records").on("click", ".approve-btn", function () {
-    const button = $(this);
-    const id = button.data("id");
-    button.prop("disabled", true).text("Approving...");
-
+  // Approve Time Out
+  $("#attendanceTable").on("click", ".approve-btn", function () {
+    const id = $(this).data("id");
+    const button = $(this).prop("disabled", true).text("Approving...");
     $.post(
       "approve_attendance.php",
       { id },
-      function (response) {
-        showToast(response.message || "Time Out Approved!", "success");
+      function (res) {
+        showToast(res.message || "Time Out approved.");
         table.ajax.reload();
       },
       "json"
     )
       .fail(() => {
-        showToast("Failed to approve. Try again.", "danger");
+        showToast("❌ Failed to approve.", "danger");
       })
       .always(() => {
         button.prop("disabled", false).text("Approve");
       });
   });
 
-  // Reject button
-  $("#records").on("click", ".reject-btn", function () {
-    const button = $(this);
-    const id = button.data("id");
-    button.prop("disabled", true).text("Rejecting...");
-
+  // Reject Time Out
+  $("#attendanceTable").on("click", ".reject-btn", function () {
+    const id = $(this).data("id");
+    const button = $(this).prop("disabled", true).text("Rejecting...");
     $.post(
       "reject_attendance.php",
       { id },
-      function (response) {
-        showToast(response.message || "Time Out Rejected!", "success");
+      function (res) {
+        showToast(res.message || "Time Out rejected.");
         table.ajax.reload();
       },
       "json"
     )
       .fail(() => {
-        showToast("Failed to reject. Try again.", "danger");
+        showToast("❌ Failed to reject.", "danger");
       })
       .always(() => {
         button.prop("disabled", false).text("Reject");
       });
   });
 
-  // Edit modal trigger
-  $("#records").on("click", ".edit-btn", function () {
+  // Edit (Optional: Only works if modal and edit_attendance.php exist)
+  $("#attendanceTable").on("click", ".edit-btn", function () {
     const rowData = table.row($(this).closest("tr")).data();
     $("#edit_id").val(rowData.id);
     $("#edit_date").val(rowData.date);
@@ -181,24 +171,20 @@ $(document).ready(function () {
     $("#editModal").modal("show");
   });
 
-  // Edit form submit
   $("#editForm").submit(function (e) {
     e.preventDefault();
     const formData = $(this).serialize();
     $.post(
       "edit_attendance.php",
       formData,
-      function (response) {
-        showToast(
-          response.message || "Record updated successfully!",
-          "success"
-        );
+      function (res) {
+        showToast(res.message || "Updated successfully");
         $("#editModal").modal("hide");
         table.ajax.reload();
       },
       "json"
     ).fail(() => {
-      showToast("Failed to update record.", "danger");
+      showToast("Update failed.", "danger");
     });
   });
 });
