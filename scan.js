@@ -1,6 +1,5 @@
 const scanner = new Html5Qrcode("reader");
 let scannedRollNumber = "";
-let scannerTimeout;
 
 if (typeof scanMode === "undefined") {
   alert(
@@ -48,9 +47,7 @@ async function handleQRCodeScan(qrCode) {
       }
 
       DOM.result.innerHTML = `
-        <div class="alert alert-success text-center mb-3">
-          👤 User QR recognized. Proceed with Time In.
-        </div>
+        <div class="alert alert-success text-center mb-3">👤 User QR recognized. Proceed with Time In.</div>
         <form id="time-form">
           <label for="item">Select Item:</label>
           <select id="item" name="item" class="form-select mb-2" required>
@@ -73,18 +70,12 @@ async function handleQRCodeScan(qrCode) {
 
       const itemSelect = document.getElementById("item");
       result.items.forEach((item) => {
-        const opt = document.createElement("option");
-        opt.value = item;
-        opt.textContent = item;
-        itemSelect.appendChild(opt);
+        itemSelect.innerHTML += `<option value="${item}">${item}</option>`;
       });
 
       const locationSelect = document.getElementById("location");
       result.locations.forEach((loc) => {
-        const opt = document.createElement("option");
-        opt.value = loc;
-        opt.textContent = loc;
-        locationSelect.appendChild(opt);
+        locationSelect.innerHTML += `<option value="${loc}">${loc}</option>`;
       });
 
       const tagInput = document.getElementById("tag");
@@ -95,7 +86,6 @@ async function handleQRCodeScan(qrCode) {
         { fps: 10, qrbox: 200 },
         async (code) => {
           const tag = code.trim();
-          await tagScanner.stop();
 
           try {
             const verifyRes = await fetch("verify_tag.php", {
@@ -109,13 +99,14 @@ async function handleQRCodeScan(qrCode) {
             const verifyData = await verifyRes.json();
             if (verifyData.valid) {
               tagInput.value = tag;
+              await tagScanner.stop();
             } else {
-              alert("❌ Invalid tag for selected item.");
+              alert("❌ Invalid tag for selected item. Please try again.");
               tagInput.value = "";
-              tagScanner.start();
+              // continue scanning
             }
-          } catch (err) {
-            alert("❌ Error verifying tag.");
+          } catch {
+            alert("❌ Error verifying tag. Please try again.");
           }
         }
       );
@@ -169,9 +160,7 @@ async function handleQRCodeScan(qrCode) {
       }
 
       DOM.result.innerHTML = `
-        <div class="alert alert-success text-center mb-3">
-          👤 User QR recognized. Scan or enter tag to Time Out.
-        </div>
+        <div class="alert alert-success text-center mb-3">👤 User QR recognized. Scan or enter tag to Time Out.</div>
         <form id="timeout-form">
           <label for="tag">Enter or Scan Tag:</label>
           <input type="text" id="tag" name="tag" class="form-control mb-2" required autocomplete="off">
@@ -190,7 +179,6 @@ async function handleQRCodeScan(qrCode) {
         { fps: 10, qrbox: 200 },
         async (code) => {
           const tag = code.trim();
-          await tagScanner.stop();
 
           try {
             const verifyRes = await fetch("verify_tag.php", {
@@ -204,13 +192,14 @@ async function handleQRCodeScan(qrCode) {
             const verifyData = await verifyRes.json();
             if (verifyData.valid) {
               tagInput.value = tag;
+              await tagScanner.stop();
             } else {
-              alert("❌ Invalid tag or not linked to you.");
+              alert("❌ Invalid tag or not linked to you. Please try again.");
               tagInput.value = "";
-              tagScanner.start();
+              // continue scanning
             }
           } catch {
-            alert("❌ Error verifying tag.");
+            alert("❌ Error verifying tag. Please try again.");
           }
         }
       );
@@ -219,6 +208,11 @@ async function handleQRCodeScan(qrCode) {
         .getElementById("timeout-form")
         .addEventListener("submit", async (e) => {
           e.preventDefault();
+
+          if (!tagInput.value.trim()) {
+            alert("❌ Tag number is required.");
+            return;
+          }
 
           try {
             const res = await fetch("time_out_handler.php", {
@@ -239,7 +233,6 @@ async function handleQRCodeScan(qrCode) {
               setTimeout(() => {
                 window.location.href = data.redirect;
               }, 2000);
-              return;
             }
           } catch {
             showAlert("danger", "❌ Network error.");
@@ -265,7 +258,6 @@ function startScanner() {
     { facingMode: "environment" },
     { fps: 10, qrbox: 250 },
     (qrCodeMessage) => {
-      clearTimeout(scannerTimeout);
       handleQRCodeScan(qrCodeMessage);
     },
     (error) => {

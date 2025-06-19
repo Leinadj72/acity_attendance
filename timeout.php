@@ -1,78 +1,55 @@
-<?php
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
-header('Content-Type: application/json');
-date_default_timezone_set('Africa/Accra');
+<?php include 'db.php'; ?>
+<?php date_default_timezone_set("Africa/Accra"); ?>
+<!DOCTYPE html>
+<html lang="en">
 
-include 'db.php';
+<head>
+  <meta charset="UTF-8">
+  <title>Time Out | QR Attendance Scanner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background-color: #f8f9fa; }
+    #reader { width: 100%; max-width: 400px; margin: 0 auto; }
+    #status-message { font-weight: bold; font-size: 1.1rem; text-align: center; }
+    .alert { font-size: 0.95rem; }
+    .spinner-border { width: 2rem; height: 2rem; }
+    #form-area { display: none; margin-top: 2rem; }
+  </style>
+</head>
 
-$tag = trim($_POST['tag'] ?? '');
+<body class="container py-5">
+  <h2 class="text-center mb-4">📸 Time Out Scanner</h2>
 
-if (empty($tag)) {
-  exit(json_encode([
-    'status' => 'error',
-    'message' => '❌ Tag number is required.'
-  ]));
-}
+  <div id="reader" class="border rounded shadow-sm"></div>
 
-// 🔍 Step 1: Check if tag exists in items_tags
-$stmt = $conn->prepare("SELECT item_name FROM items_tags WHERE tag_number = ?");
-$stmt->bind_param("s", $tag);
-$stmt->execute();
-$result = $stmt->get_result();
-$tagData = $result->fetch_assoc();
-$stmt->close();
+  <div id="status-message" class="text-muted mt-3">
+    <div class="spinner-border text-secondary me-2" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    Waiting for QR code...
+  </div>
 
-if (!$tagData) {
-  exit(json_encode([
-    'status' => 'error',
-    'message' => '❌ Tag number not found in the system.'
-  ]));
-}
+  <div id="result" class="mt-4"></div>
 
-// 🔍 Step 2: Find attendance record for this tag where Time Out is not yet done/requested
-$stmt = $conn->prepare("
-    SELECT id 
-    FROM attendance 
-    WHERE tag_number = ? 
-      AND time_out IS NULL 
-      AND (time_out_requested IS NULL OR time_out_requested = 0)
-      AND time_out_approved = 0
-    ORDER BY id DESC 
-    LIMIT 1
-");
-$stmt->bind_param("s", $tag);
-$stmt->execute();
-$result = $stmt->get_result();
-$attendance = $result->fetch_assoc();
-$stmt->close();
+  <div id="form-area" class="mt-4">
+    <form id="timeout-form" class="border p-3 rounded bg-white shadow-sm">
+      <input type="hidden" id="roll_number" name="roll_number">
 
-if (!$attendance) {
-  exit(json_encode([
-    'status' => 'error',
-    'message' => '⚠️ No active Time In record found or Time Out already requested.'
-  ]));
-}
+      <div class="mb-3">
+        <label for="tag" class="form-label">Enter or Scan Tag Number</label>
+        <input type="text" class="form-control" id="tag" name="tag" required>
+      </div>
 
-// 🕒 Step 3: Request Time Out
-$attendance_id = $attendance['id'];
-$current_time = date('Y-m-d H:i:s');
+      <button type="submit" class="btn btn-danger w-100">⏳ Request Time Out</button>
+    </form>
+  </div>
 
-$update = $conn->prepare("UPDATE attendance SET time_out_requested = 1, time_out_requested_at = ? WHERE id = ?");
-$update->bind_param("si", $current_time, $attendance_id);
-$update->execute();
+  <script src="https://unpkg.com/html5-qrcode@2.3.7/html5-qrcode.min.js"></script>
+  <script>
+    const scanMode = 'out';
+  </script>
+  <script src="scan.js"></script>
+</body>
 
-if ($update->affected_rows === 0) {
-  exit(json_encode([
-    'status' => 'error',
-    'message' => '⚠️ Failed to request Time Out. Please try again.'
-  ]));
-}
-
-$update->close();
-
-echo json_encode([
-  'status' => 'success',
-  'message' => '✅ Time Out request submitted. Awaiting admin approval.',
-  'redirect' => 'scan.php'
-]);
+</html>
