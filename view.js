@@ -49,40 +49,22 @@ $(document).ready(function () {
       { data: "item" },
       { data: "tag_number" },
       { data: "location" },
-      {
-        data: "time_in",
-        render: (data) => data || "--",
-      },
-      {
-        data: "time_out",
-        render: (data) => data || "--",
-      },
-      {
-        data: "time_out_requested_at",
-        render: (data) => data || "--",
-      },
+      { data: "time_in", render: (data) => data || "--" },
+      { data: "time_out", render: (data) => data || "--" },
+      { data: "time_out_requested_at", render: (data) => data || "--" },
       {
         data: "status",
         render: function (status) {
-          let badgeClass = "secondary";
-          switch (status) {
-            case "Approved":
-              badgeClass = "success";
-              break;
-            case "Rejected":
-              badgeClass = "danger";
-              break;
-            case "Pending":
-              badgeClass = "warning";
-              break;
-            case "Active":
-              badgeClass = "info";
-              break;
-            case "Completed":
-              badgeClass = "primary";
-              break;
-          }
-          return `<span class="badge bg-${badgeClass}">${status}</span>`;
+          const classes = {
+            Approved: "success",
+            Rejected: "danger",
+            Pending: "warning",
+            Active: "info",
+            Completed: "primary",
+          };
+          return `<span class="badge bg-${
+            classes[status] || "secondary"
+          }">${status}</span>`;
         },
       },
       {
@@ -114,44 +96,61 @@ $(document).ready(function () {
     table.ajax.reload();
   });
 
-  $("#attendanceTable").on("click", ".approve-btn", function () {
-    const id = $(this).data("id");
-    const button = $(this).prop("disabled", true).text("Approving...");
+  function handleAction(endpoint, id, button, successStatus, successMessage) {
+    button.prop("disabled", true).text(successStatus + "...");
     $.post(
-      "approve_attendance.php",
+      endpoint,
       { id },
       function (res) {
-        showToast(res.message || "Time Out approved.");
-        table.ajax.reload();
+        if (res.status === "success") {
+          showToast(res.message || successMessage);
+          const rowIdx = table.row(button.closest("tr")).index();
+          table
+            .cell(rowIdx, table.column("status:name").index())
+            .data(successStatus)
+            .draw(false);
+          table
+            .cell(rowIdx, table.column("time_out:name").index())
+            .data(res.time_out || "--")
+            .draw(false);
+        } else {
+          showToast(
+            res.message || `❌ Failed to ${successStatus.toLowerCase()}.`,
+            "danger"
+          );
+        }
       },
       "json"
     )
       .fail(() => {
-        showToast("❌ Failed to approve.", "danger");
+        showToast(
+          `❌ Network error during ${successStatus.toLowerCase()}.`,
+          "danger"
+        );
       })
       .always(() => {
-        button.prop("disabled", false).text("Approve");
+        button.prop("disabled", false).text(successStatus);
       });
+  }
+
+  $("#attendanceTable").on("click", ".approve-btn", function () {
+    handleAction(
+      "approve_attendance.php",
+      $(this).data("id"),
+      $(this),
+      "Approved",
+      "Time Out approved."
+    );
   });
 
   $("#attendanceTable").on("click", ".reject-btn", function () {
-    const id = $(this).data("id");
-    const button = $(this).prop("disabled", true).text("Rejecting...");
-    $.post(
+    handleAction(
       "reject_attendance.php",
-      { id },
-      function (res) {
-        showToast(res.message || "Time Out rejected.");
-        table.ajax.reload();
-      },
-      "json"
-    )
-      .fail(() => {
-        showToast("❌ Failed to reject.", "danger");
-      })
-      .always(() => {
-        button.prop("disabled", false).text("Reject");
-      });
+      $(this).data("id"),
+      $(this),
+      "Rejected",
+      "Time Out rejected."
+    );
   });
 
   $("#attendanceTable").on("click", ".edit-btn", function () {
