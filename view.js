@@ -170,6 +170,13 @@ $(document).ready(function () {
     );
   });
 
+  // Helper function to extract HH:mm:ss from datetime string
+  function extractTime(datetime) {
+    if (!datetime) return "";
+    const timePart = datetime.split(" ")[1];
+    return timePart ? timePart.slice(0, 8) : "";
+  }
+
   $("#attendanceTable").on("click", ".edit-btn", function () {
     const rowData = table.row($(this).closest("tr")).data();
     $("#edit_id").val(rowData.id);
@@ -177,8 +184,8 @@ $(document).ready(function () {
     $("#edit_roll_number").val(rowData.roll_number);
     $("#edit_location").val(rowData.location);
     $("#edit_item").val(rowData.item);
-    $("#edit_time_in").val(rowData.time_in || "");
-    $("#edit_time_out").val(rowData.time_out || "");
+    $("#edit_time_in").val(extractTime(rowData.time_in));
+    $("#edit_time_out").val(extractTime(rowData.time_out));
     $("#editModal").modal("show");
   });
 

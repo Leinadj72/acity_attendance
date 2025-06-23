@@ -109,6 +109,7 @@ if (!isset($_SESSION['admin_logged_in'])) {
   <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h2>📋 Device Management</h2>
+      <a href="change_password.php" class="btn btn-warning me-2">Change Password</a>
       <a href="logout.php" class="btn btn-danger">Logout</a>
     </div>
 
