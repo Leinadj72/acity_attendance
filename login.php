@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   if ($admin && password_verify($password, $admin['password'])) {
     $_SESSION['admin_logged_in'] = true;
-    $_SESSION['admin_username'] = $admin['username']; // ✅ fixed line
+    $_SESSION['admin_username'] = $admin['username'];
     header("Location: view_attendance.php");
     exit;
   } else {

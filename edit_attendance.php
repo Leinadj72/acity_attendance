@@ -3,7 +3,6 @@ session_start();
 header('Content-Type: application/json; charset=utf-8');
 include 'db.php';
 
-// Authorization check
 if (!isset($_SESSION['admin_logged_in']) || !isset($_SESSION['admin_username'])) {
   http_response_code(403);
   echo json_encode(['success' => false, 'message' => '❌ Unauthorized access.']);
@@ -12,7 +11,6 @@ if (!isset($_SESSION['admin_logged_in']) || !isset($_SESSION['admin_username']))
 
 $admin_username = $_SESSION['admin_username'];
 
-// Capture and sanitize inputs
 $id = intval($_POST['id'] ?? 0);
 $date = trim($_POST['date'] ?? '');
 $roll_number = trim($_POST['roll_number'] ?? '');
@@ -21,7 +19,6 @@ $item = trim($_POST['item'] ?? '');
 $time_in = $_POST['time_in'] !== '' ? $_POST['time_in'] : null;
 $time_out = $_POST['time_out'] !== '' ? $_POST['time_out'] : null;
 
-// Validate required fields
 if (!$id || !$date || !$roll_number || !$location || !$item) {
   echo json_encode(['success' => false, 'message' => '❌ Missing required fields.']);
   exit;

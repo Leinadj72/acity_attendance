@@ -116,7 +116,6 @@ $(document).ready(function () {
         if (res.success === true) {
           showToast(res.message || successMessage);
 
-          // Update the row instead of full reload
           const rowData = row.data();
           rowData.status = newStatus;
           rowData.time_out = res.time_out || rowData.time_out || "--";
