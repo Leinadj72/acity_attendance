@@ -4,12 +4,14 @@ include 'db.php';
 
 header('Content-Type: application/json');
 
-if (!isset($_SESSION['admin_logged_in'])) {
+// Check if admin is logged in
+if (!isset($_SESSION['admin_logged_in']) || !isset($_SESSION['admin_username'])) {
   http_response_code(403);
   echo json_encode(['success' => false, 'message' => 'Unauthorized']);
   exit;
 }
 
+$admin_username = $_SESSION['admin_username'];
 $id = intval($_POST['id'] ?? 0);
 
 if (!$id) {
@@ -17,6 +19,7 @@ if (!$id) {
   exit;
 }
 
+// Fetch tag_number and item for this attendance record
 $stmt = $conn->prepare("SELECT tag_number, item FROM attendance WHERE id = ?");
 $stmt->bind_param("i", $id);
 $stmt->execute();
@@ -32,16 +35,19 @@ $tag_number = $row['tag_number'];
 $item = $row['item'];
 $stmt->close();
 
+// Update attendance record: approve time out, set approved_by
 $stmt = $conn->prepare("
   UPDATE attendance 
   SET time_out_approved = 1, 
-      time_out = IFNULL(time_out, NOW()) 
+      time_out = IFNULL(time_out, NOW()),
+      approved_by = ?
   WHERE id = ?
 ");
-$stmt->bind_param("i", $id);
+$stmt->bind_param("si", $admin_username, $id);
 $stmt->execute();
 $stmt->close();
 
+// Mark the item as available
 $stmt = $conn->prepare("
   UPDATE items_tags 
   SET is_available = 1 

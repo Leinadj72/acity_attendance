@@ -148,6 +148,9 @@ if (!isset($_SESSION['admin_logged_in'])) {
           <th>Time Out</th>
           <th>Requested At</th>
           <th>Status</th>
+          <th>Approved By</th>
+          <th>Rejected By</th>
+          <th>Edited By</th>
           <th>Actions</th>
         </tr>
       </thead>

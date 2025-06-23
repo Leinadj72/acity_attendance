@@ -85,7 +85,10 @@ while ($row = $result->fetch_assoc()) {
     'status' => $status,
     'id' => $row['id'],
     'time_out_requested' => $row['time_out_requested'],
-    'time_out_approved' => $row['time_out_approved']
+    'time_out_approved' => $row['time_out_approved'],
+    'approved_by' => $row['approved_by'] ?? '--',
+    'rejected_by' => $row['rejected_by'] ?? '--',
+    'edited_by' => $row['edited_by'] ?? '--'
   ];
 }
 

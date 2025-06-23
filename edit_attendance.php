@@ -3,11 +3,13 @@ session_start();
 header('Content-Type: application/json; charset=utf-8');
 include 'db.php';
 
-if (!isset($_SESSION['admin_logged_in'])) {
+if (!isset($_SESSION['admin_logged_in']) || !isset($_SESSION['admin_username'])) {
   http_response_code(403);
   echo json_encode(['success' => false, 'message' => 'Unauthorized']);
   exit;
 }
+
+$admin_username = $_SESSION['admin_username'];
 
 $id = intval($_POST['id'] ?? 0);
 $date = trim($_POST['date'] ?? '');
@@ -22,8 +24,19 @@ if (!$id || !$date || !$roll_number || !$location || !$item) {
   exit;
 }
 
-$stmt = $conn->prepare("UPDATE attendance SET date = ?, roll_number = ?, location = ?, item = ?, time_in = ?, time_out = ? WHERE id = ?");
-$stmt->bind_param("ssssssi", $date, $roll_number, $location, $item, $time_in, $time_out, $id);
+$stmt = $conn->prepare("
+  UPDATE attendance 
+  SET date = ?, 
+      roll_number = ?, 
+      location = ?, 
+      item = ?, 
+      time_in = ?, 
+      time_out = ?, 
+      edited_by = ? 
+  WHERE id = ?
+");
+
+$stmt->bind_param("sssssssi", $date, $roll_number, $location, $item, $time_in, $time_out, $admin_username, $id);
 
 if ($stmt->execute()) {
   echo json_encode(['success' => true, 'message' => 'Attendance record updated']);
@@ -33,4 +46,3 @@ if ($stmt->execute()) {
 
 $stmt->close();
 $conn->close();
-?>

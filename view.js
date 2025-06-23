@@ -67,6 +67,9 @@ $(document).ready(function () {
           }">${status}</span>`;
         },
       },
+      { data: "approved_by", render: (data) => data || "--" },
+      { data: "rejected_by", render: (data) => data || "--" },
+      { data: "edited_by", render: (data) => data || "--" },
       {
         data: null,
         orderable: false,
@@ -74,9 +77,9 @@ $(document).ready(function () {
           let buttons = `<button class="btn btn-sm btn-outline-primary edit-btn" data-id="${row.id}">Edit</button> `;
           if (row.time_out_requested == 1 && row.time_out_approved == 0) {
             buttons += `
-              <button class="btn btn-sm btn-outline-success approve-btn" data-id="${row.id}">Approve</button>
-              <button class="btn btn-sm btn-outline-danger reject-btn" data-id="${row.id}">Reject</button>
-            `;
+          <button class="btn btn-sm btn-outline-success approve-btn" data-id="${row.id}">Approve</button>
+          <button class="btn btn-sm btn-outline-danger reject-btn" data-id="${row.id}">Reject</button>
+        `;
           } else {
             buttons += `<span class="text-muted">No Action</span>`;
           }
