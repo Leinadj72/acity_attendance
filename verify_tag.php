@@ -8,6 +8,27 @@ $roll_number = trim($_POST['roll_number'] ?? '');
 
 $today = date('Y-m-d');
 
+// Time In: Get item name by tag only
+if (!empty($tag) && empty($item) && empty($roll_number)) {
+    $stmt = $conn->prepare("
+        SELECT item_name FROM items_tags 
+        WHERE tag_number = ? 
+          AND is_available = 1
+        LIMIT 1
+    ");
+    $stmt->bind_param("s", $tag);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($row = $result->fetch_assoc()) {
+        echo json_encode(['valid' => true, 'item' => $row['item_name'], 'mode' => 'time_in']);
+    } else {
+        echo json_encode(['valid' => false, 'message' => 'Invalid or unavailable tag']);
+    }
+    exit;
+}
+
+// Time In (old method with both tag + item)
 if (!empty($tag) && !empty($item) && empty($roll_number)) {
     $stmt = $conn->prepare("
         SELECT id FROM items_tags 
@@ -23,6 +44,7 @@ if (!empty($tag) && !empty($item) && empty($roll_number)) {
     exit;
 }
 
+// Time Out
 if (!empty($tag) && !empty($roll_number) && empty($item)) {
     $stmt = $conn->prepare("
         SELECT id FROM attendance
@@ -43,5 +65,5 @@ if (!empty($tag) && !empty($roll_number) && empty($item)) {
 
 echo json_encode([
     'valid' => false,
-    'message' => 'Invalid parameters. Provide either (tag + item) for Time In or (tag + roll_number) for Time Out.'
+    'message' => 'Invalid parameters. Provide either (tag) for Time In or (tag + roll_number) for Time Out.'
 ]);

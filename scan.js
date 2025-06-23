@@ -21,6 +21,34 @@ function showAlert(type, message) {
   DOM.result.innerHTML = `<div class="alert alert-${type} text-center">${message}</div>`;
 }
 
+async function verifyAndAutoSelectItem(tag) {
+  try {
+    const res = await fetch("verify_tag.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `tag=${encodeURIComponent(tag)}`,
+    });
+    const data = await res.json();
+    if (data.valid && data.item) {
+      const itemSelect = document.getElementById("item");
+      const options = itemSelect.options;
+      for (let i = 0; i < options.length; i++) {
+        if (options[i].value === data.item) {
+          options[i].selected = true;
+          break;
+        }
+      }
+      return true;
+    } else {
+      alert("❌ Invalid tag or unavailable.");
+      return false;
+    }
+  } catch {
+    alert("❌ Error verifying tag. Please try again.");
+    return false;
+  }
+}
+
 async function handleQRCodeScan(qrCode) {
   console.log("QR Code detected:", qrCode);
   await scanner.stop();
@@ -37,7 +65,6 @@ async function handleQRCodeScan(qrCode) {
     });
 
     const result = await res.json();
-
     const displayName = result.student?.name || "Unknown";
     const displayRoll = result.student?.roll_number || scannedRollNumber;
 
@@ -91,29 +118,18 @@ async function handleQRCodeScan(qrCode) {
         { fps: 10, qrbox: 200 },
         async (code) => {
           const tag = code.trim();
-
-          try {
-            const verifyRes = await fetch("verify_tag.php", {
-              method: "POST",
-              headers: { "Content-Type": "application/x-www-form-urlencoded" },
-              body: `tag=${encodeURIComponent(tag)}&item=${encodeURIComponent(
-                itemSelect.value
-              )}`,
-            });
-
-            const verifyData = await verifyRes.json();
-            if (verifyData.valid) {
-              tagInput.value = tag;
-              await tagScanner.stop();
-            } else {
-              alert("❌ Invalid tag for selected item. Please try again.");
-              tagInput.value = "";
-            }
-          } catch {
-            alert("❌ Error verifying tag. Please try again.");
-          }
+          tagInput.value = tag;
+          const valid = await verifyAndAutoSelectItem(tag);
+          if (valid) await tagScanner.stop();
         }
       );
+
+      tagInput.addEventListener("blur", async () => {
+        const tag = tagInput.value.trim();
+        if (tag) {
+          await verifyAndAutoSelectItem(tag);
+        }
+      });
 
       document
         .getElementById("time-form")
@@ -136,7 +152,6 @@ async function handleQRCodeScan(qrCode) {
               headers: { "Content-Type": "application/x-www-form-urlencoded" },
               body: formData.toString(),
             });
-
             const data = await submitRes.json();
             showAlert(
               data.status === "success" ? "success" : "danger",
@@ -144,9 +159,7 @@ async function handleQRCodeScan(qrCode) {
             );
 
             if (data.status === "success" && data.redirect) {
-              setTimeout(() => {
-                window.location.href = data.redirect;
-              }, 2000);
+              setTimeout(() => (window.location.href = data.redirect), 2000);
             }
           } catch {
             showAlert("danger", "❌ Network error.");
@@ -194,8 +207,8 @@ async function handleQRCodeScan(qrCode) {
                 tag
               )}&roll_number=${encodeURIComponent(displayRoll)}`,
             });
-
             const verifyData = await verifyRes.json();
+
             if (verifyData.valid) {
               tagInput.value = tag;
               await tagScanner.stop();
@@ -227,7 +240,6 @@ async function handleQRCodeScan(qrCode) {
                 displayRoll
               )}&tag=${encodeURIComponent(tagInput.value.trim())}`,
             });
-
             const data = await res.json();
             showAlert(
               data.status === "success" ? "success" : "danger",
@@ -235,9 +247,7 @@ async function handleQRCodeScan(qrCode) {
             );
 
             if (data.status === "success" && data.redirect) {
-              setTimeout(() => {
-                window.location.href = data.redirect;
-              }, 2000);
+              setTimeout(() => (window.location.href = data.redirect), 2000);
             }
           } catch {
             showAlert("danger", "❌ Network error.");
