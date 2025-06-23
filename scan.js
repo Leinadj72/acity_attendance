@@ -25,7 +25,7 @@ async function handleQRCodeScan(qrCode) {
   console.log("QR Code detected:", qrCode);
   await scanner.stop();
   scannedRollNumber = qrCode.trim();
-  updateStatus("⌛ Verifying roll number...");
+  updateStatus("User 👤 Verified ✅");
 
   try {
     const res = await fetch("scan_handler.php", {
@@ -38,6 +38,9 @@ async function handleQRCodeScan(qrCode) {
 
     const result = await res.json();
 
+    const displayName = result.student?.name || "Unknown";
+    const displayRoll = result.student?.roll_number || scannedRollNumber;
+
     if (scanMode === "in") {
       if (result.status !== "require_inputs") {
         showAlert("danger", result.message);
@@ -47,7 +50,9 @@ async function handleQRCodeScan(qrCode) {
       }
 
       DOM.result.innerHTML = `
-        <div class="alert alert-success text-center mb-3">👤 User QR recognized. Proceed with Time In.</div>
+        <div class="alert alert-success text-center mb-3">
+          👤 <strong>${displayName}</strong> - ${displayRoll}. Proceed with Time In.
+        </div>
         <form id="time-form">
           <label for="item">Select Item:</label>
           <select id="item" name="item" class="form-select mb-2" required>
@@ -116,7 +121,7 @@ async function handleQRCodeScan(qrCode) {
           e.preventDefault();
 
           const formData = new URLSearchParams({
-            roll_number: result.student?.roll_number || scannedRollNumber,
+            roll_number: displayRoll,
             item: itemSelect.value,
             tag_number: tagInput.value.trim(),
             location: locationSelect.value,
@@ -159,7 +164,9 @@ async function handleQRCodeScan(qrCode) {
       }
 
       DOM.result.innerHTML = `
-        <div class="alert alert-success text-center mb-3">👤 User QR recognized. Scan or enter tag to Time Out.</div>
+        <div class="alert alert-success text-center mb-3">
+          👤 <strong>${displayName}</strong> (${displayRoll}). Proceed with Time Out.
+        </div>
         <form id="timeout-form">
           <label for="tag">Enter or Scan Tag:</label>
           <input type="text" id="tag" name="tag" class="form-control mb-2" required autocomplete="off">
@@ -185,7 +192,7 @@ async function handleQRCodeScan(qrCode) {
               headers: { "Content-Type": "application/x-www-form-urlencoded" },
               body: `tag=${encodeURIComponent(
                 tag
-              )}&roll_number=${encodeURIComponent(result.roll_number)}`,
+              )}&roll_number=${encodeURIComponent(displayRoll)}`,
             });
 
             const verifyData = await verifyRes.json();
@@ -217,7 +224,7 @@ async function handleQRCodeScan(qrCode) {
               method: "POST",
               headers: { "Content-Type": "application/x-www-form-urlencoded" },
               body: `roll_number=${encodeURIComponent(
-                result.roll_number
+                displayRoll
               )}&tag=${encodeURIComponent(tagInput.value.trim())}`,
             });
 
@@ -255,12 +262,8 @@ function startScanner() {
   scanner.start(
     { facingMode: "environment" },
     { fps: 10, qrbox: 250 },
-    (qrCodeMessage) => {
-      handleQRCodeScan(qrCodeMessage);
-    },
-    (error) => {
-      console.warn("QR scan error:", error);
-    }
+    (qrCodeMessage) => handleQRCodeScan(qrCodeMessage),
+    (error) => console.warn("QR scan error:", error)
   );
 }
 
