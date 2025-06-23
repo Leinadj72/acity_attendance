@@ -14,6 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   if ($admin && password_verify($password, $admin['password'])) {
     $_SESSION['admin_logged_in'] = true;
+    $_SESSION['admin_username'] = $admin['username']; // ✅ fixed line
     header("Location: view_attendance.php");
     exit;
   } else {
@@ -21,13 +22,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <title>Admin Login</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 </head>
+
 <body class="container py-5">
   <h2>Admin Login</h2>
   <?php if (isset($error)) echo "<div class='alert alert-danger'>$error</div>"; ?>
@@ -43,4 +45,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <button class="btn btn-primary">Login</button>
   </form>
 </body>
+
 </html>

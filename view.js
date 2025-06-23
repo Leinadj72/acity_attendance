@@ -77,9 +77,9 @@ $(document).ready(function () {
           let buttons = `<button class="btn btn-sm btn-outline-primary edit-btn" data-id="${row.id}">Edit</button> `;
           if (row.time_out_requested == 1 && row.time_out_approved == 0) {
             buttons += `
-          <button class="btn btn-sm btn-outline-success approve-btn" data-id="${row.id}">Approve</button>
-          <button class="btn btn-sm btn-outline-danger reject-btn" data-id="${row.id}">Reject</button>
-        `;
+              <button class="btn btn-sm btn-outline-success approve-btn" data-id="${row.id}">Approve</button>
+              <button class="btn btn-sm btn-outline-danger reject-btn" data-id="${row.id}">Reject</button>
+            `;
           } else {
             buttons += `<span class="text-muted">No Action</span>`;
           }
@@ -99,26 +99,41 @@ $(document).ready(function () {
     table.ajax.reload();
   });
 
-  function handleAction(endpoint, id, button, successStatus, successMessage) {
-    button.prop("disabled", true).text(successStatus + "...");
+  function handleAction(endpoint, id, button, newStatus, successMessage) {
+    const row = table.row(button.closest("tr"));
+    const originalHTML = button.html();
+
+    button
+      .prop("disabled", true)
+      .html(
+        `<span class="spinner-border spinner-border-sm me-1"></span> ${newStatus}...`
+      );
+
     $.post(
       endpoint,
       { id },
       function (res) {
-        if (res.status === "success") {
+        if (res.success === true) {
           showToast(res.message || successMessage);
-          const rowIdx = table.row(button.closest("tr")).index();
-          table
-            .cell(rowIdx, table.column("status:name").index())
-            .data(successStatus)
-            .draw(false);
-          table
-            .cell(rowIdx, table.column("time_out:name").index())
-            .data(res.time_out || "--")
-            .draw(false);
+
+          // Update the row instead of full reload
+          const rowData = row.data();
+          rowData.status = newStatus;
+          rowData.time_out = res.time_out || rowData.time_out || "--";
+          rowData.approved_by =
+            newStatus === "Approved"
+              ? res.approved_by || "--"
+              : rowData.approved_by;
+          rowData.rejected_by =
+            newStatus === "Rejected"
+              ? res.rejected_by || "--"
+              : rowData.rejected_by;
+          rowData.time_out_requested = 0;
+          rowData.time_out_approved = newStatus === "Approved" ? 1 : 0;
+          row.data(rowData).invalidate().draw(false);
         } else {
           showToast(
-            res.message || `❌ Failed to ${successStatus.toLowerCase()}.`,
+            res.message || `❌ Failed to ${newStatus.toLowerCase()}.`,
             "danger"
           );
         }
@@ -127,12 +142,12 @@ $(document).ready(function () {
     )
       .fail(() => {
         showToast(
-          `❌ Network error during ${successStatus.toLowerCase()}.`,
+          `❌ Network error during ${newStatus.toLowerCase()}.`,
           "danger"
         );
       })
       .always(() => {
-        button.prop("disabled", false).text(successStatus);
+        button.prop("disabled", false).html(originalHTML);
       });
   }
 
@@ -142,7 +157,7 @@ $(document).ready(function () {
       $(this).data("id"),
       $(this),
       "Approved",
-      "Time Out approved."
+      "✅ Time Out approved."
     );
   });
 
@@ -152,7 +167,7 @@ $(document).ready(function () {
       $(this).data("id"),
       $(this),
       "Rejected",
-      "Time Out rejected."
+      "❌ Time Out rejected."
     );
   });
 
@@ -175,13 +190,17 @@ $(document).ready(function () {
       "edit_attendance.php",
       formData,
       function (res) {
-        showToast(res.message || "Updated successfully");
-        $("#editModal").modal("hide");
-        table.ajax.reload();
+        if (res.success) {
+          showToast(res.message || "✅ Updated successfully");
+          $("#editModal").modal("hide");
+          table.ajax.reload(null, false);
+        } else {
+          showToast(res.message || "❌ Update failed", "danger");
+        }
       },
       "json"
     ).fail(() => {
-      showToast("Update failed.", "danger");
+      showToast("❌ Network error during update.", "danger");
     });
   });
 });

@@ -1,1 +1,5 @@
-Incorrect datetime value: '20:27:59' for column `acity_attendance`.`qr_tokens`.`time_in` at row 1Duplicate entry '19-2025-05-31' for key 'token_id'
+Array
+(
+    [admin_logged_in] => 1
+    [admin_username] => adminIT
+)
