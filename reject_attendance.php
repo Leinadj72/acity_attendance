@@ -4,7 +4,6 @@ include 'db.php';
 
 header('Content-Type: application/json');
 
-// Check if admin is logged in
 if (!isset($_SESSION['admin_logged_in']) || !isset($_SESSION['admin_username'])) {
   http_response_code(403);
   echo json_encode(['success' => false, 'message' => 'Unauthorized']);
@@ -19,7 +18,6 @@ if (!$id) {
   exit;
 }
 
-// Get tag and item for future use (optional)
 $stmt = $conn->prepare("SELECT tag_number, item FROM attendance WHERE id = ?");
 $stmt->bind_param("i", $id);
 $stmt->execute();
@@ -35,7 +33,6 @@ $tag_number = $row['tag_number'];
 $item = $row['item'];
 $stmt->close();
 
-// Update attendance to reject the request, and record who rejected it
 $stmt = $conn->prepare("
   UPDATE attendance 
   SET time_out_requested = 0, 

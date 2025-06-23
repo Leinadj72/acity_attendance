@@ -21,6 +21,15 @@ if (!isset($_SESSION['admin_logged_in'])) {
   <link href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap5.min.css" rel="stylesheet" />
 
   <style>
+    html, body {
+      width: 100%;
+      overflow-x: hidden;
+    }
+
+    .container-fluid {
+      padding: 2rem;
+    }
+
     .badge-Active {
       background-color: #0d6efd;
       color: white;
@@ -62,10 +71,6 @@ if (!isset($_SESSION['admin_logged_in'])) {
       padding: 0.4em 0.6em;
     }
 
-    .dataTables_wrapper {
-      overflow-x: auto;
-    }
-
     table.dataTable.no-footer {
       border-bottom: none;
     }
@@ -95,67 +100,69 @@ if (!isset($_SESSION['admin_logged_in'])) {
   </style>
 </head>
 
-<body class="container py-5">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>📋 Device Management</h2>
-    <a href="logout.php" class="btn btn-danger">Logout</a>
-  </div>
+<body>
+  <div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2>📋 Device Management</h2>
+      <a href="logout.php" class="btn btn-danger">Logout</a>
+    </div>
 
-  <div class="row g-3 mb-4 align-items-end">
-    <div class="col-md-2">
-      <label for="start_date" class="form-label">Start Date</label>
-      <input type="date" id="start_date" class="form-control" />
-    </div>
-    <div class="col-md-2">
-      <label for="end_date" class="form-label">End Date</label>
-      <input type="date" id="end_date" class="form-control" />
-    </div>
-    <div class="col-md-3">
-      <label for="search_roll_location" class="form-label">Roll Number or Location</label>
-      <input type="text" id="search_roll_location" class="form-control" placeholder="Search..." />
-    </div>
-    <div class="col-md-2">
-      <label for="search_tag_number" class="form-label">Tag Number</label>
-      <input type="text" id="search_tag_number" class="form-control" />
-    </div>
-    <div class="col-md-2">
-      <div class="form-check mt-4">
-        <input type="checkbox" class="form-check-input" id="pending_only" />
-        <label class="form-check-label" for="pending_only">Pending Time Out</label>
+    <div class="row g-3 mb-4 align-items-end">
+      <div class="col-md-2">
+        <label for="start_date" class="form-label">Start Date</label>
+        <input type="date" id="start_date" class="form-control" />
+      </div>
+      <div class="col-md-2">
+        <label for="end_date" class="form-label">End Date</label>
+        <input type="date" id="end_date" class="form-control" />
+      </div>
+      <div class="col-md-3">
+        <label for="search_roll_location" class="form-label">Roll Number or Location</label>
+        <input type="text" id="search_roll_location" class="form-control" placeholder="Search..." />
+      </div>
+      <div class="col-md-2">
+        <label for="search_tag_number" class="form-label">Tag Number</label>
+        <input type="text" id="search_tag_number" class="form-control" />
+      </div>
+      <div class="col-md-2">
+        <div class="form-check mt-4">
+          <input type="checkbox" class="form-check-input" id="pending_only" />
+          <label class="form-check-label" for="pending_only">Pending Time Out</label>
+        </div>
+      </div>
+      <div class="col-md-1">
+        <button class="btn btn-primary w-100" id="filterBtn">Filter</button>
       </div>
     </div>
-    <div class="col-md-1">
-      <button class="btn btn-primary w-100" id="filterBtn">Filter</button>
+
+    <div id="toastContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 9999;"></div>
+
+    <div class="table-responsive">
+      <table id="attendanceTable" class="table table-hover table-striped table-bordered align-middle w-100">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Date</th>
+            <th>Roll Number</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Item</th>
+            <th>Tag</th>
+            <th>Location</th>
+            <th>Time In</th>
+            <th>Time Out</th>
+            <th>Requested At</th>
+            <th>Status</th>
+            <th>Approved By</th>
+            <th>Rejected By</th>
+            <th>Edited By</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </div>
-  </div>
-
-  <div id="toastContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 9999;"></div>
-
-  <div class="table-responsive mt-4">
-    <table id="attendanceTable" class="table table-hover table-striped table-bordered align-middle" style="width:100%">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Date</th>
-          <th>Roll Number</th>
-          <th>Name</th>
-          <th>Email</th>
-          <th>Phone</th>
-          <th>Item</th>
-          <th>Tag</th>
-          <th>Location</th>
-          <th>Time In</th>
-          <th>Time Out</th>
-          <th>Requested At</th>
-          <th>Status</th>
-          <th>Approved By</th>
-          <th>Rejected By</th>
-          <th>Edited By</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
   </div>
 
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
