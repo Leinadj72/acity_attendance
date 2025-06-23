@@ -8,7 +8,6 @@ $roll_number = trim($_POST['roll_number'] ?? '');
 
 $today = date('Y-m-d');
 
-// Time In: Get item name by tag only
 if (!empty($tag) && empty($item) && empty($roll_number)) {
     $stmt = $conn->prepare("
         SELECT item_name FROM items_tags 
@@ -28,7 +27,6 @@ if (!empty($tag) && empty($item) && empty($roll_number)) {
     exit;
 }
 
-// Time In (old method with both tag + item)
 if (!empty($tag) && !empty($item) && empty($roll_number)) {
     $stmt = $conn->prepare("
         SELECT id FROM items_tags 
@@ -44,7 +42,6 @@ if (!empty($tag) && !empty($item) && empty($roll_number)) {
     exit;
 }
 
-// Time Out
 if (!empty($tag) && !empty($roll_number) && empty($item)) {
     $stmt = $conn->prepare("
         SELECT id FROM attendance
