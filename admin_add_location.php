@@ -2,6 +2,14 @@
 include 'db.php';
 $msg = '';
 
+if (isset($_GET['msg'])) {
+  if ($_GET['msg'] === 'updated') {
+    $msg = "✅ Location updated.";
+  } elseif ($_GET['msg'] === 'added') {
+    $msg = "✅ Location added.";
+  }
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $location = trim($_POST['location'] ?? '');
   $edit_id = $_POST['edit_id'] ?? '';
@@ -11,12 +19,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $stmt = $conn->prepare("UPDATE locations SET location_name = ? WHERE id = ?");
       $stmt->bind_param("si", $location, $edit_id);
       $stmt->execute();
-      $msg = "✅ Location updated.";
+      header("Location: admin_add_location.php?msg=updated");
+      exit;
     } else {
       $stmt = $conn->prepare("INSERT INTO locations (location_name) VALUES (?)");
       $stmt->bind_param("s", $location);
       $stmt->execute();
-      $msg = "✅ Location added.";
+      header("Location: admin_add_location.php?msg=added");
+      exit;
     }
   } else {
     $msg = "❌ Location name required.";
@@ -26,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 if (isset($_GET['delete'])) {
   $del_id = intval($_GET['delete']);
   $conn->query("DELETE FROM locations WHERE id = $del_id");
-  header("Location: add_location.php");
+  header("Location: admin_add_location.php");
   exit;
 }
 
@@ -66,7 +76,7 @@ $locations = $conn->query("SELECT * FROM locations ORDER BY location_name ASC");
       <?= $edit_location ? 'Update' : 'Add' ?> Location
     </button>
     <?php if ($edit_location): ?>
-      <a href="add_location.php" class="btn btn-secondary">Cancel</a>
+      <a href="admin_add_location.php" class="btn btn-secondary">Cancel</a>
     <?php endif; ?>
   </form>
 
@@ -75,12 +85,17 @@ $locations = $conn->query("SELECT * FROM locations ORDER BY location_name ASC");
     <thead>
       <tr>
         <th>Name</th>
+        <th style="width: 150px;">Actions</th>
       </tr>
     </thead>
     <tbody>
       <?php while ($loc = $locations->fetch_assoc()): ?>
         <tr>
           <td><?= htmlspecialchars($loc['location_name']) ?></td>
+          <td>
+            <a href="admin_add_location.php?edit=<?= $loc['id'] ?>" class="btn btn-sm btn-warning">Edit</a>
+            <a href="admin_add_location.php?delete=<?= $loc['id'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('Delete this location?');">Delete</a>
+          </td>
         </tr>
       <?php endwhile; ?>
     </tbody>
