@@ -178,7 +178,7 @@ async function handleQRCodeScan(qrCode) {
 
       DOM.result.innerHTML = `
         <div class="alert alert-success text-center mb-3">
-          👤 <strong>${displayName}</strong> (${displayRoll}). Proceed with Time Out.
+          👤 <strong>${displayName}</strong> - ${displayRoll}. Proceed with Time Out.
         </div>
         <form id="timeout-form">
           <label for="tag">Enter or Scan Tag:</label>

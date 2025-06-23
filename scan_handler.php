@@ -84,6 +84,7 @@ if ($mode === 'out') {
                 'status' => 'ready_for_timeout',
                 'message' => '✅ You may proceed to Time Out.',
                 'roll_number' => $roll_number,
+                'student' => $student,
                 'tag_number' => $record['tag_number'],
                 'record_id' => $record['id']
             ]));
