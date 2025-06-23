@@ -171,7 +171,6 @@ if (!isset($_SESSION['admin_logged_in'])) {
     </div>
   </div>
 
-  <!-- Edit Modal -->
   <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
       <form class="modal-content" id="editForm">
