@@ -41,8 +41,8 @@ if (!empty($data['data']['student_roll_number'])) {
 $roll_number = $student['roll_number'];
 $today = date('Y-m-d');
 
-$stmt = $conn->prepare("SELECT * FROM attendance WHERE roll_number = ? AND date = ? ORDER BY id DESC");
-$stmt->bind_param("ss", $roll_number, $today);
+$stmt = $conn->prepare("SELECT * FROM attendance WHERE roll_number = ? AND time_out IS NULL ORDER BY id DESC");
+$stmt->bind_param("s", $roll_number);
 $stmt->execute();
 $records = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
